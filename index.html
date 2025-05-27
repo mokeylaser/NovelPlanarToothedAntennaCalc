@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novel Planar Toothed Antenna Calc</title>
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components/calculator.css">
+    <link rel="stylesheet" href="css/components/visualization.css">
+    <link rel="stylesheet" href="css/components/controls.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Novel Planar Toothed Antenna Calc</h1>
+            <p class="subtitle">Calculate resonant frequencies and visualize log-periodic planar antennas</p>
+        </header>
+
+        <main class="app-main">
+            <div class="content-grid">
+                <!-- Calculator Section -->
+                <section class="calculator-section">
+                    <div class="card">
+                        <h2>Antenna Parameters</h2>
+                        <form id="calculator-form">
+                            <!-- Input Mode Selection -->
+                            <div class="input-mode-group">
+                                <p class="input-label">Input Mode:</p>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="inputMode" value="r1" checked>
+                                        <span>Initial Inner Tooth Radius (r₁)</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="inputMode" value="f1">
+                                        <span>Starting Frequency (f₁)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Input Fields -->
+                            <div id="r1-input" class="form-group">
+                                <label for="r1">Initial Inner Tooth Radius (r₁) [m]:</label>
+                                <input type="number" id="r1" step="any" required>
+                                <span class="error-message" id="r1-error"></span>
+                            </div>
+
+                            <div id="f1-input" class="form-group hidden">
+                                <label for="f1">Starting Frequency (f₁):</label>
+                                <div class="input-with-unit">
+                                    <input type="number" id="f1" step="any">
+                                    <select id="f1-unit" class="unit-select" title="Frequency unit selection">
+                                        <option value="Hz">Hz</option>
+                                        <option value="kHz">kHz</option>
+                                        <option value="MHz">MHz</option>
+                                        <option value="GHz" selected>GHz</option>
+                                    </select>
+                                </div>
+                                <span class="error-message" id="f1-error"></span>
+                            </div>
+
+                            <!-- Common Parameters -->
+                            <div class="form-group">
+                                <label for="gamma">Scaling Factor (Γ):</label>
+                                <input type="number" id="gamma" step="any" value="1.2" required>
+                                <span class="error-message" id="gamma-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="toothPairs">Number of Tooth Pairs:</label>
+                                <input type="number" id="toothPairs" min="1" max="10" value="5" required>
+                                <span class="error-message" id="toothPairs-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="alpha">Tooth Angle (α) [degrees]:</label>
+                                <input type="number" id="alpha" step="any" value="30" required>
+                                <span class="error-message" id="alpha-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="Eeff">Effective Permittivity (ε<sub>eff</sub>):</label>
+                                <input type="number" id="Eeff" step="any" value="2.2" required>
+                                <span class="error-message" id="Eeff-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="frequency-unit">Output Frequency Unit:</label>
+                                <select id="frequency-unit" class="unit-select" title="Output frequency unit selection">
+                                    <option value="Hz">Hz</option>
+                                    <option value="kHz">kHz</option>
+                                    <option value="MHz">MHz</option>
+                                    <option value="GHz" selected>GHz</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="calculate-btn">Calculate</button>
+                        </form>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div class="card hidden" id="results-card">
+                        <h2>Calculation Results</h2>
+                        <div id="results-container"></div>
+                        <div class="export-controls hidden">
+                            <button id="export-dxf" class="export-btn" disabled>Export as DXF</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Visualization Section -->
+                <section class="visualization-section">
+                    <div class="card">
+                        <h2>Antenna Visualization</h2>
+                        <div id="antenna-visualization" class="visualization-container">
+                            <p class="placeholder-text">Calculate antenna parameters to see visualization</p>
+                        </div>
+                    </div>
+
+                    <!-- Formulas Card -->
+                    <div class="card formulas-card">
+                        <h2>Formulas Used</h2>
+                        <div class="formula-content">
+                            <h3>When inputting r₁:</h3>
+                            <p>
+                                \[
+                                f_n = \frac{C}{2 \left[ r_n \left(1 + \sqrt{\Gamma}\right) \left( \frac{\alpha \pi}{180} \right) + r_n \left(\sqrt{\Gamma} - 1\right) \right] \sqrt{\varepsilon_{\text{eff}}}}
+                                \]
+                                \[
+                                \text{Where } r_n = r_1 \times \Gamma^{(n-1)}
+                                \]
+                            </p>
+                            <h3>When inputting f₁:</h3>
+                            <p>
+                                \[
+                                r_1 = \frac{C}{2 f_1 \left( (1 + \sqrt{\Gamma}) \left( \frac{\alpha \pi}{180} \right) + \sqrt{\Gamma} - 1 \right) \sqrt{\varepsilon_{\text{eff}}}}
+                                \]
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>Based on: A. Scheuring, S. Wuensch and M. Siegel, "A Novel Analytical Model of Resonance Effects of Log-Periodic Planar Antennas," IEEE TAP, vol. 57, no. 11, pp. 3482-3488, Nov. 2009.</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
