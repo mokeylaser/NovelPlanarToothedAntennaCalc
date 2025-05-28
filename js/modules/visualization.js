@@ -138,6 +138,9 @@ export class AntennaVisualizer {
         zeroLabel.textContent = '0°';
         antennaGroup.appendChild(zeroLabel);
         
+        // Calculate beta
+        const beta = 90 - params.alpha;
+        
         // Draw alpha line (clockwise from 0°)
         const alphaRad = MathHelpers.degToRad(params.alpha);
         const alphaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + alphaRad);
@@ -158,9 +161,9 @@ export class AntennaVisualizer {
         alphaLabel.textContent = `α=${params.alpha}°`;
         antennaGroup.appendChild(alphaLabel);
         
-        // Draw beta line (counter-clockwise from 0°)
-        const betaRad = MathHelpers.degToRad(params.beta);
-        const betaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 - betaRad);
+        // Draw beta line (90 degrees clockwise from 0°)
+        const betaRad = MathHelpers.degToRad(90);
+        const betaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + betaRad);
         const betaLine = this.createLine(0, 0, betaEnd.x, betaEnd.y);
         betaLine.setAttribute('class', 'antenna-outline');
         betaLine.setAttribute('stroke', '#059669'); // Green for beta
@@ -168,39 +171,34 @@ export class AntennaVisualizer {
         antennaGroup.appendChild(betaLine);
         
         // Add beta label
-        const betaLabelPos = MathHelpers.polarToCartesian(outermostRadius + 30, -Math.PI/2 - betaRad);
+        const betaLabelPos = MathHelpers.polarToCartesian(outermostRadius + 30, -Math.PI/2 + betaRad);
         const betaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         betaLabel.setAttribute('x', betaLabelPos.x);
         betaLabel.setAttribute('y', betaLabelPos.y);
         betaLabel.setAttribute('class', 'dimension-text');
         betaLabel.setAttribute('text-anchor', 'middle');
         betaLabel.setAttribute('fill', '#059669');
-        betaLabel.textContent = `β=${params.beta}°`;
+        betaLabel.textContent = `β=${beta}°`;
         antennaGroup.appendChild(betaLabel);
         
-        // Draw arc to show alpha + beta
-        const totalAngleRad = alphaRad + betaRad;
-        if (totalAngleRad < Math.PI) {
-            const arcRadius = outermostRadius * 0.3;
-            const arcPath = this.createArc(0, 0, arcRadius, -Math.PI/2 - betaRad, -Math.PI/2 + alphaRad);
-            const arc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            arc.setAttribute('d', arcPath);
-            arc.setAttribute('class', 'dimension-line');
-            arc.setAttribute('fill', 'none');
-            antennaGroup.appendChild(arc);
-            
-            // Add total angle label
-            const midAngle = -Math.PI/2;
-            const totalLabelPos = MathHelpers.polarToCartesian(arcRadius - 20, midAngle);
-            const totalLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            totalLabel.setAttribute('x', totalLabelPos.x);
-            totalLabel.setAttribute('y', totalLabelPos.y);
-            totalLabel.setAttribute('class', 'dimension-text');
-            totalLabel.setAttribute('text-anchor', 'middle');
-            totalLabel.setAttribute('font-size', '12');
-            totalLabel.textContent = `${(params.alpha + params.beta).toFixed(1)}°`;
-            antennaGroup.appendChild(totalLabel);
-        }
+        // Draw arc to show alpha
+        const arcRadius = outermostRadius * 0.3;
+        const alphaArcPath = this.createArc(0, 0, arcRadius, -Math.PI/2, -Math.PI/2 + alphaRad);
+        const alphaArc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        alphaArc.setAttribute('d', alphaArcPath);
+        alphaArc.setAttribute('class', 'dimension-line');
+        alphaArc.setAttribute('fill', 'none');
+        alphaArc.setAttribute('stroke', '#e11d48');
+        antennaGroup.appendChild(alphaArc);
+        
+        // Draw arc to show beta
+        const betaArcPath = this.createArc(0, 0, arcRadius * 0.5, -Math.PI/2 + alphaRad, -Math.PI/2 + betaRad);
+        const betaArc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        betaArc.setAttribute('d', betaArcPath);
+        betaArc.setAttribute('class', 'dimension-line');
+        betaArc.setAttribute('fill', 'none');
+        betaArc.setAttribute('stroke', '#059669');
+        antennaGroup.appendChild(betaArc);
         
         this.svg.appendChild(antennaGroup);
     }

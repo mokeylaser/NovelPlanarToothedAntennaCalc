@@ -117,7 +117,6 @@ class AntennaCalcApp {
         const params = {
             gamma: parseFloat(document.getElementById('gamma').value),
             alpha: parseFloat(document.getElementById('alpha').value),
-            beta: parseFloat(document.getElementById('beta').value),
             Eeff: parseFloat(document.getElementById('Eeff').value),
             toothPairs: parseInt(document.getElementById('toothPairs').value),
             outputUnit: document.getElementById('frequency-unit').value
@@ -150,20 +149,8 @@ class AntennaCalcApp {
             errors['gamma-error'] = 'Scaling factor (Γ) must be greater than zero';
         }
         
-        if (isNaN(params.alpha) || params.alpha <= 0) {
-            errors['alpha-error'] = 'Tooth angle (α) must be greater than 0 degrees';
-        }
-        
-        if (isNaN(params.beta) || params.beta <= 0) {
-            errors['beta-error'] = 'Tooth angle (β) must be greater than 0 degrees';
-        }
-        
-        // Check that alpha + beta < 180
-        if (!isNaN(params.alpha) && !isNaN(params.beta)) {
-            if (params.alpha + params.beta >= 180) {
-                errors['alpha-error'] = 'α + β must be less than 180 degrees';
-                errors['beta-error'] = 'α + β must be less than 180 degrees';
-            }
+        if (isNaN(params.alpha) || params.alpha <= 0 || params.alpha > 90) {
+            errors['alpha-error'] = 'Tooth angle (α) must be between 0 and 90 degrees';
         }
         
         if (isNaN(params.Eeff) || params.Eeff < 1) {

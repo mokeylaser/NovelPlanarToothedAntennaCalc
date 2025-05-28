@@ -59,6 +59,7 @@ circle.antenna-tooth:hover {
     font-size: 0.75rem;
     font-family: var(--font-mono);
     text-anchor: middle;
+    -webkit-user-select: none;
     user-select: none;
 }
 
