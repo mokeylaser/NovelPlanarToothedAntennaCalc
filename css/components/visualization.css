@@ -42,7 +42,7 @@
     transition: all var(--transition-fast);
 }
 
-.antenna-tooth:hover {
+circle.antenna-tooth:hover {
     stroke: var(--primary-hover);
     stroke-width: 2.5;
 }
@@ -59,6 +59,7 @@
     font-size: 0.75rem;
     font-family: var(--font-mono);
     text-anchor: middle;
+    user-select: none;
 }
 
 /* Grid Lines */

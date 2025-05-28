@@ -84,6 +84,12 @@
                             </div>
 
                             <div class="form-group">
+                                <label for="beta">Tooth Angle (β) [degrees]:</label>
+                                <input type="number" id="beta" step="any" value="30" required>
+                                <span class="error-message" id="beta-error"></span>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="Eeff">Effective Permittivity (ε<sub>eff</sub>):</label>
                                 <input type="number" id="Eeff" step="any" value="2.2" required>
                                 <span class="error-message" id="Eeff-error"></span>
@@ -133,6 +139,9 @@
                                 \]
                                 \[
                                 \text{Where } r_n = r_1 \times \Gamma^{(n-1)}
+                                \]
+                                \[
+                                \text{Note: } \alpha + \beta < 180°
                                 \]
                             </p>
                             <h3>When inputting f₁:</h3>
