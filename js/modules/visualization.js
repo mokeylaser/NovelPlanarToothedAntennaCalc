@@ -200,6 +200,38 @@ export class AntennaVisualizer {
         betaArc.setAttribute('stroke', '#059669');
         antennaGroup.appendChild(betaArc);
         
+        // Draw mirrored alpha line (alpha degrees past beta)
+        const mirroredAlphaAngle = 90 + params.alpha;
+        const mirroredAlphaRad = MathHelpers.degToRad(mirroredAlphaAngle);
+        const mirroredAlphaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + mirroredAlphaRad);
+        const mirroredAlphaLine = this.createLine(0, 0, mirroredAlphaEnd.x, mirroredAlphaEnd.y);
+        mirroredAlphaLine.setAttribute('class', 'antenna-outline');
+        mirroredAlphaLine.setAttribute('stroke', '#e11d48'); // Same red as alpha
+        mirroredAlphaLine.setAttribute('stroke-width', '2');
+        mirroredAlphaLine.setAttribute('stroke-dasharray', '5, 5'); // Dashed to differentiate
+        antennaGroup.appendChild(mirroredAlphaLine);
+        
+        // Add mirrored alpha label
+        const mirroredAlphaLabelPos = MathHelpers.polarToCartesian(outermostRadius + 30, -Math.PI/2 + mirroredAlphaRad);
+        const mirroredAlphaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        mirroredAlphaLabel.setAttribute('x', mirroredAlphaLabelPos.x);
+        mirroredAlphaLabel.setAttribute('y', mirroredAlphaLabelPos.y);
+        mirroredAlphaLabel.setAttribute('class', 'dimension-text');
+        mirroredAlphaLabel.setAttribute('text-anchor', 'middle');
+        mirroredAlphaLabel.setAttribute('fill', '#e11d48');
+        mirroredAlphaLabel.textContent = `${mirroredAlphaAngle}°`;
+        antennaGroup.appendChild(mirroredAlphaLabel);
+        
+        // Draw arc to show mirrored alpha from beta
+        const mirroredAlphaArcPath = this.createArc(0, 0, arcRadius * 0.5, -Math.PI/2 + betaRad, -Math.PI/2 + mirroredAlphaRad);
+        const mirroredAlphaArc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        mirroredAlphaArc.setAttribute('d', mirroredAlphaArcPath);
+        mirroredAlphaArc.setAttribute('class', 'dimension-line');
+        mirroredAlphaArc.setAttribute('fill', 'none');
+        mirroredAlphaArc.setAttribute('stroke', '#e11d48');
+        mirroredAlphaArc.setAttribute('stroke-dasharray', '3, 3');
+        antennaGroup.appendChild(mirroredAlphaArc);
+        
         this.svg.appendChild(antennaGroup);
     }
 
