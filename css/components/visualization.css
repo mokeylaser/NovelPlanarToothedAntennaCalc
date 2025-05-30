@@ -51,17 +51,31 @@
 }
 
 /* Different colors for quadrants */
-.antenna-tooth-filled.quadrant-1 {
+.antenna-tooth-filled.quadrant-1,
+.antenna-tooth-filled.quadrant-1-mirror {
     fill: var(--primary-color);
 }
 
-.antenna-tooth-filled.quadrant-3 {
+.antenna-tooth-filled.quadrant-3,
+.antenna-tooth-filled.quadrant-3-mirror {
     fill: var(--primary-hover);
+}
+
+/* Beta sections - solid triangular regions */
+.antenna-tooth-filled.beta-section,
+.antenna-tooth-filled.beta-section-mirror {
+    fill: var(--success-color);
+    opacity: 0.6;
 }
 
 .antenna-tooth-filled:hover {
     opacity: 1;
     filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
+}
+
+.antenna-tooth-filled.beta-section:hover,
+.antenna-tooth-filled.beta-section-mirror:hover {
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
 }
 
 circle.antenna-tooth:hover {

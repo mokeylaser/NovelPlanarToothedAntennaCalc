@@ -92,20 +92,20 @@ export class AntennaVisualizer {
         
         // Calculate angles
         const alphaRad = MathHelpers.degToRad(params.alpha);
-        const betaRad = MathHelpers.degToRad(90);
+        const betaStartRad = MathHelpers.degToRad(params.alpha); // Beta starts where alpha ends
+        const betaEndRad = MathHelpers.degToRad(90); // Beta ends at 90 degrees
+        const q3StartRad = MathHelpers.degToRad(90); // Q3 starts at 90 degrees
+        const q3EndRad = MathHelpers.degToRad(90 + params.alpha); // Q3 ends at 90 + alpha
         
-        // Draw the antenna teeth with alternating pattern
+        // Draw alternating teeth in Q1 (0 to alpha degrees)
         results.forEach((result, index) => {
-            if (index < results.length - 1) { // Don't draw tooth for the last radius
+            if (index < results.length - 1) {
                 const currentRn = result.rn * 1000 * scaleFactor;
                 const nextRn = results[index + 1].rn * 1000 * scaleFactor;
                 
-                // Determine which quadrants to draw based on index
-                // Even indices (0, 2, 4...) draw in first quadrant (alpha to beta)
-                // Odd indices (1, 3, 5...) draw in third quadrant (opposite side)
+                // Q1: Even indices (0, 2, 4...) draw teeth from 0 to alpha
                 if (index % 2 === 0) {
-                    // First quadrant tooth (between alpha and beta)
-                    const tooth1Path = this.createToothPath(currentRn, nextRn, -Math.PI/2 + alphaRad, -Math.PI/2 + betaRad);
+                    const tooth1Path = this.createToothPath(currentRn, nextRn, -Math.PI/2, -Math.PI/2 + alphaRad);
                     const tooth1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     tooth1.setAttribute('d', tooth1Path);
                     tooth1.setAttribute('class', 'antenna-tooth-filled quadrant-1');
@@ -114,83 +114,115 @@ export class AntennaVisualizer {
                     tooth1.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
                     tooth1.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
                     antennaGroup.appendChild(tooth1);
-                } else {
-                    // Third quadrant tooth (180 degrees rotated)
-                    const tooth2Path = this.createToothPath(currentRn, nextRn, -Math.PI/2 + alphaRad + Math.PI, -Math.PI/2 + betaRad + Math.PI);
-                    const tooth2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    tooth2.setAttribute('d', tooth2Path);
-                    tooth2.setAttribute('class', 'antenna-tooth-filled quadrant-3');
-                    tooth2.setAttribute('data-tooth-index', index);
-                    tooth2.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
-                    tooth2.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
-                    tooth2.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
-                    antennaGroup.appendChild(tooth2);
+                }
+                
+                // Q3: Odd indices (1, 3, 5...) draw teeth from 90 to 90+alpha
+                if (index % 2 === 1) {
+                    const tooth3Path = this.createToothPath(currentRn, nextRn, -Math.PI/2 + q3StartRad, -Math.PI/2 + q3EndRad);
+                    const tooth3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    tooth3.setAttribute('d', tooth3Path);
+                    tooth3.setAttribute('class', 'antenna-tooth-filled quadrant-3');
+                    tooth3.setAttribute('data-tooth-index', index);
+                    tooth3.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
+                    tooth3.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
+                    tooth3.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
+                    antennaGroup.appendChild(tooth3);
                 }
             }
         });
         
-        // Draw reference lines (optional - can be toggled)
-        const showReferenceLines = true; // Can make this a parameter later
+        // Draw the solid beta section (Q2: from alpha to 90 degrees)
+        if (results.length > 0) {
+            const innerRadius = results[0].rn * 1000 * scaleFactor; // Smallest radius
+            const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma); // Largest radius
+            
+            const betaPath = this.createToothPath(innerRadius, outerRadius, -Math.PI/2 + betaStartRad, -Math.PI/2 + betaEndRad);
+            const betaSection = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            betaSection.setAttribute('d', betaPath);
+            betaSection.setAttribute('class', 'antenna-tooth-filled beta-section');
+            betaSection.setAttribute('data-section', 'beta');
+            betaSection.setAttribute('data-angle', `${params.alpha}°-90°`);
+            antennaGroup.appendChild(betaSection);
+        }
         
+        // Draw the other half of the dipole (180 degrees rotated)
+        results.forEach((result, index) => {
+            if (index < results.length - 1) {
+                const currentRn = result.rn * 1000 * scaleFactor;
+                const nextRn = results[index + 1].rn * 1000 * scaleFactor;
+                
+                // Mirror Q1: Even indices, 180 degrees from Q1
+                if (index % 2 === 0) {
+                    const tooth1MirrorPath = this.createToothPath(currentRn, nextRn, Math.PI/2, Math.PI/2 + alphaRad);
+                    const tooth1Mirror = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    tooth1Mirror.setAttribute('d', tooth1MirrorPath);
+                    tooth1Mirror.setAttribute('class', 'antenna-tooth-filled quadrant-1-mirror');
+                    tooth1Mirror.setAttribute('data-tooth-index', index);
+                    tooth1Mirror.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
+                    tooth1Mirror.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
+                    tooth1Mirror.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
+                    antennaGroup.appendChild(tooth1Mirror);
+                }
+                
+                // Mirror Q3: Odd indices, 180 degrees from Q3
+                if (index % 2 === 1) {
+                    const tooth3MirrorPath = this.createToothPath(currentRn, nextRn, Math.PI/2 + q3StartRad, Math.PI/2 + q3EndRad);
+                    const tooth3Mirror = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    tooth3Mirror.setAttribute('d', tooth3MirrorPath);
+                    tooth3Mirror.setAttribute('class', 'antenna-tooth-filled quadrant-3-mirror');
+                    tooth3Mirror.setAttribute('data-tooth-index', index);
+                    tooth3Mirror.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
+                    tooth3Mirror.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
+                    tooth3Mirror.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
+                    antennaGroup.appendChild(tooth3Mirror);
+                }
+            }
+        });
+        
+        // Draw the mirrored beta section
+        if (results.length > 0) {
+            const innerRadius = results[0].rn * 1000 * scaleFactor;
+            const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
+            
+            const betaMirrorPath = this.createToothPath(innerRadius, outerRadius, Math.PI/2 + betaStartRad, Math.PI/2 + betaEndRad);
+            const betaMirrorSection = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            betaMirrorSection.setAttribute('d', betaMirrorPath);
+            betaMirrorSection.setAttribute('class', 'antenna-tooth-filled beta-section-mirror');
+            betaMirrorSection.setAttribute('data-section', 'beta-mirror');
+            betaMirrorSection.setAttribute('data-angle', `${180 + params.alpha}°-270°`);
+            antennaGroup.appendChild(betaMirrorSection);
+        }
+        
+        // Draw reference lines (optional)
+        const showReferenceLines = true;
         if (showReferenceLines) {
-            const outermostRadius = results[results.length - 1].rn * 1000 * scaleFactor;
-            
-            // Draw reference line at 0 degrees (top)
-            const refLine = this.createLine(0, 0, 0, -outermostRadius);
-            refLine.setAttribute('class', 'reference-line');
-            refLine.setAttribute('stroke-width', '1');
-            refLine.setAttribute('stroke', '#666');
-            refLine.setAttribute('stroke-dasharray', '2, 2');
-            antennaGroup.appendChild(refLine);
-            
-            // Draw alpha line
-            const alphaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + alphaRad);
-            const alphaLine = this.createLine(0, 0, alphaEnd.x, alphaEnd.y);
-            alphaLine.setAttribute('class', 'reference-line');
-            alphaLine.setAttribute('stroke', '#e11d48');
-            alphaLine.setAttribute('stroke-width', '1');
-            alphaLine.setAttribute('stroke-dasharray', '2, 2');
-            antennaGroup.appendChild(alphaLine);
-            
-            // Draw beta line
-            const betaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + betaRad);
-            const betaLine = this.createLine(0, 0, betaEnd.x, betaEnd.y);
-            betaLine.setAttribute('class', 'reference-line');
-            betaLine.setAttribute('stroke', '#059669');
-            betaLine.setAttribute('stroke-width', '1');
-            betaLine.setAttribute('stroke-dasharray', '2, 2');
-            antennaGroup.appendChild(betaLine);
-            
-            // Draw 180 degree line
-            const line180 = this.createLine(0, 0, 0, outermostRadius);
-            line180.setAttribute('class', 'reference-line');
-            line180.setAttribute('stroke', '#666');
-            line180.setAttribute('stroke-width', '1');
-            line180.setAttribute('stroke-dasharray', '2, 2');
-            antennaGroup.appendChild(line180);
-            
-            // Draw mirrored alpha and beta lines in third quadrant
-            const alphaEnd2 = MathHelpers.polarToCartesian(outermostRadius, Math.PI/2 - alphaRad);
-            const alphaLine2 = this.createLine(0, 0, alphaEnd2.x, alphaEnd2.y);
-            alphaLine2.setAttribute('class', 'reference-line');
-            alphaLine2.setAttribute('stroke', '#e11d48');
-            alphaLine2.setAttribute('stroke-width', '1');
-            alphaLine2.setAttribute('stroke-dasharray', '2, 2');
-            antennaGroup.appendChild(alphaLine2);
-            
-            const betaEnd2 = MathHelpers.polarToCartesian(outermostRadius, Math.PI/2 - betaRad);
-            const betaLine2 = this.createLine(0, 0, betaEnd2.x, betaEnd2.y);
-            betaLine2.setAttribute('class', 'reference-line');
-            betaLine2.setAttribute('stroke', '#059669');
-            betaLine2.setAttribute('stroke-width', '1');
-            betaLine2.setAttribute('stroke-dasharray', '2, 2');
-            antennaGroup.appendChild(betaLine2);
-            
-            // Add angle labels
-            this.addAngleLabels(antennaGroup, outermostRadius, params.alpha);
+            this.drawReferenceLines(antennaGroup, results, scaleFactor, params);
         }
         
         this.svg.appendChild(antennaGroup);
+    }
+    
+    drawReferenceLines(group, results, scaleFactor, params) {
+        const outermostRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
+        const alphaRad = MathHelpers.degToRad(params.alpha);
+        
+        // Draw main angle lines
+        const angles = [0, params.alpha, 90, 90 + params.alpha, 180, 180 + params.alpha, 270, 270 + params.alpha];
+        const colors = ['#666', '#e11d48', '#059669', '#e11d48', '#666', '#e11d48', '#059669', '#e11d48'];
+        
+        angles.forEach((angle, i) => {
+            const angleRad = MathHelpers.degToRad(angle);
+            const end = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + angleRad);
+            const line = this.createLine(0, 0, end.x, end.y);
+            line.setAttribute('class', 'reference-line');
+            line.setAttribute('stroke', colors[i]);
+            line.setAttribute('stroke-width', '1');
+            line.setAttribute('stroke-dasharray', '2, 2');
+            group.appendChild(line);
+        });
+        
+        // Add angle labels
+        this.addAngleLabels(group, outermostRadius, params.alpha);
     }
 
     createToothPath(innerRadius, outerRadius, startAngle, endAngle) {
@@ -351,18 +383,38 @@ export class AntennaVisualizer {
 
     showTooltip(event, tooltip) {
         const element = event.target;
-        const toothPair = element.getAttribute('data-tooth-pair');
-        const frequency = element.getAttribute('data-frequency');
-        const radius = element.getAttribute('data-radius');
-        const quadrant = element.classList.contains('quadrant-1') ? 'Q1' : 'Q3';
+        const section = element.getAttribute('data-section');
         
-        tooltip.innerHTML = `
-            <div class="tooltip-content">
-                <div><span class="tooltip-label">Tooth:</span> ${toothPair} (${quadrant})</div>
-                <div><span class="tooltip-label">Frequency Range:</span> ${frequency} ${this.currentData.params.outputUnit}</div>
-                <div><span class="tooltip-label">Radius Range:</span> ${radius} m</div>
-            </div>
-        `;
+        if (section === 'beta' || section === 'beta-mirror') {
+            // Beta section tooltip
+            const angle = element.getAttribute('data-angle');
+            tooltip.innerHTML = `
+                <div class="tooltip-content">
+                    <div><span class="tooltip-label">Section:</span> Beta (β)</div>
+                    <div><span class="tooltip-label">Angle Range:</span> ${angle}</div>
+                    <div><span class="tooltip-label">Type:</span> Solid triangular region</div>
+                </div>
+            `;
+        } else {
+            // Regular tooth tooltip
+            const toothPair = element.getAttribute('data-tooth-pair');
+            const frequency = element.getAttribute('data-frequency');
+            const radius = element.getAttribute('data-radius');
+            let quadrant = '';
+            
+            if (element.classList.contains('quadrant-1')) quadrant = 'Q1';
+            else if (element.classList.contains('quadrant-3')) quadrant = 'Q3';
+            else if (element.classList.contains('quadrant-1-mirror')) quadrant = 'Q1 (mirror)';
+            else if (element.classList.contains('quadrant-3-mirror')) quadrant = 'Q3 (mirror)';
+            
+            tooltip.innerHTML = `
+                <div class="tooltip-content">
+                    <div><span class="tooltip-label">Tooth:</span> ${toothPair} (${quadrant})</div>
+                    <div><span class="tooltip-label">Frequency Range:</span> ${frequency} ${this.currentData.params.outputUnit}</div>
+                    <div><span class="tooltip-label">Radius Range:</span> ${radius} m</div>
+                </div>
+            `;
+        }
         
         tooltip.classList.add('visible');
         this.updateTooltipPosition(event, tooltip);
