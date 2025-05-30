@@ -43,7 +43,6 @@
 }
 
 .antenna-tooth-filled {
-    fill: var(--primary-color);
     stroke: var(--primary-hover);
     stroke-width: 0.5;
     opacity: 0.8;
@@ -51,21 +50,18 @@
     cursor: pointer;
 }
 
-.antenna-tooth-filled:hover {
-    fill: var(--primary-hover);
-    opacity: 1;
-    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
-}
-
-/* Alternating colors for better visibility */
-.antenna-tooth-filled:nth-child(4n+1),
-.antenna-tooth-filled:nth-child(4n+2) {
+/* Different colors for quadrants */
+.antenna-tooth-filled.quadrant-1 {
     fill: var(--primary-color);
 }
 
-.antenna-tooth-filled:nth-child(4n+3),
-.antenna-tooth-filled:nth-child(4n+4) {
+.antenna-tooth-filled.quadrant-3 {
     fill: var(--primary-hover);
+}
+
+.antenna-tooth-filled:hover {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
 }
 
 circle.antenna-tooth:hover {
