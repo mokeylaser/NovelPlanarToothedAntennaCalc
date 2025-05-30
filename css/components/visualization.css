@@ -42,9 +42,45 @@
     transition: all var(--transition-fast);
 }
 
+.antenna-tooth-filled {
+    fill: var(--primary-color);
+    stroke: var(--primary-hover);
+    stroke-width: 0.5;
+    opacity: 0.8;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.antenna-tooth-filled:hover {
+    fill: var(--primary-hover);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
+}
+
+/* Alternating colors for better visibility */
+.antenna-tooth-filled:nth-child(4n+1),
+.antenna-tooth-filled:nth-child(4n+2) {
+    fill: var(--primary-color);
+}
+
+.antenna-tooth-filled:nth-child(4n+3),
+.antenna-tooth-filled:nth-child(4n+4) {
+    fill: var(--primary-hover);
+}
+
 circle.antenna-tooth:hover {
     stroke: var(--primary-hover);
     stroke-width: 2.5;
+}
+
+/* Reference Lines */
+.reference-line {
+    opacity: 0.3;
+    transition: opacity var(--transition-fast);
+}
+
+.antenna-group:hover .reference-line {
+    opacity: 0.6;
 }
 
 /* Dimension Lines */

@@ -87,152 +87,157 @@ export class AntennaVisualizer {
         
         // Calculate scale factor to fit antenna in viewport
         const maxRadius = results[results.length - 1].rn * 1000; // Convert to mm
-        const scaleFactor = 400 / maxRadius; // Scale to fit in viewport
+        const outerRadiusMax = maxRadius * Math.sqrt(params.gamma);
+        const scaleFactor = 400 / outerRadiusMax; // Scale to fit in viewport
         
-        // Draw concentric circles for each rn
+        // Calculate angles
+        const alphaRad = MathHelpers.degToRad(params.alpha);
+        const betaRad = MathHelpers.degToRad(90);
+        const mirroredAlphaRad = MathHelpers.degToRad(90 + params.alpha);
+        
+        // Draw the antenna teeth as filled shapes
         results.forEach((result, index) => {
-            const rn = result.rn * 1000 * scaleFactor; // Convert to mm and scale
+            const rn = result.rn * 1000 * scaleFactor; // Inner radius
+            const outerRadius = rn * Math.sqrt(params.gamma); // Outer radius
             
-            // Draw circle for this radius
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', '0');
-            circle.setAttribute('cy', '0');
-            circle.setAttribute('r', rn);
-            circle.setAttribute('class', 'antenna-tooth');
-            circle.setAttribute('data-tooth-pair', result.n);
-            circle.setAttribute('data-frequency', result.fnDisplay.toFixed(3));
-            circle.setAttribute('data-radius', result.rn.toFixed(6));
-            circle.setAttribute('fill', 'none');
+            // Create paths for the two teeth (top-right and bottom-left quadrants)
+            // Top-right tooth (between alpha and beta)
+            const tooth1Path = this.createToothPath(rn, outerRadius, -Math.PI/2 + alphaRad, -Math.PI/2 + betaRad);
+            const tooth1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            tooth1.setAttribute('d', tooth1Path);
+            tooth1.setAttribute('class', 'antenna-tooth-filled');
+            tooth1.setAttribute('data-tooth-pair', result.n);
+            tooth1.setAttribute('data-frequency', result.fnDisplay.toFixed(3));
+            tooth1.setAttribute('data-radius', result.rn.toFixed(6));
+            antennaGroup.appendChild(tooth1);
             
-            antennaGroup.appendChild(circle);
-            
-            // Add radius label
-            const labelAngle = -Math.PI / 2; // Top of circle (0 degrees)
-            const labelPos = MathHelpers.polarToCartesian(rn + 10, labelAngle);
-            
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', labelPos.x);
-            text.setAttribute('y', labelPos.y);
-            text.setAttribute('class', 'dimension-text');
-            text.setAttribute('text-anchor', 'middle');
-            text.textContent = `r${result.n}`;
-            
-            antennaGroup.appendChild(text);
+            // Bottom-left tooth (180 degrees rotated)
+            const tooth2Path = this.createToothPath(rn, outerRadius, -Math.PI/2 + alphaRad + Math.PI, -Math.PI/2 + betaRad + Math.PI);
+            const tooth2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            tooth2.setAttribute('d', tooth2Path);
+            tooth2.setAttribute('class', 'antenna-tooth-filled');
+            tooth2.setAttribute('data-tooth-pair', result.n);
+            tooth2.setAttribute('data-frequency', result.fnDisplay.toFixed(3));
+            tooth2.setAttribute('data-radius', result.rn.toFixed(6));
+            antennaGroup.appendChild(tooth2);
         });
         
-        // Get the outermost radius for drawing angle lines
-        const outermostRadius = results[results.length - 1].rn * 1000 * scaleFactor;
+        // Draw reference lines (optional - can be toggled)
+        const showReferenceLines = true; // Can make this a parameter later
         
-        // Draw reference line at 0 degrees (top)
-        const refLine = this.createLine(0, 0, 0, -outermostRadius);
-        refLine.setAttribute('class', 'antenna-outline');
-        refLine.setAttribute('stroke-width', '2');
-        antennaGroup.appendChild(refLine);
+        if (showReferenceLines) {
+            const outermostRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
+            
+            // Draw reference line at 0 degrees (top)
+            const refLine = this.createLine(0, 0, 0, -outermostRadius);
+            refLine.setAttribute('class', 'reference-line');
+            refLine.setAttribute('stroke-width', '1');
+            refLine.setAttribute('stroke', '#666');
+            refLine.setAttribute('stroke-dasharray', '2, 2');
+            antennaGroup.appendChild(refLine);
+            
+            // Draw alpha line
+            const alphaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + alphaRad);
+            const alphaLine = this.createLine(0, 0, alphaEnd.x, alphaEnd.y);
+            alphaLine.setAttribute('class', 'reference-line');
+            alphaLine.setAttribute('stroke', '#e11d48');
+            alphaLine.setAttribute('stroke-width', '1');
+            alphaLine.setAttribute('stroke-dasharray', '2, 2');
+            antennaGroup.appendChild(alphaLine);
+            
+            // Draw beta line
+            const betaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + betaRad);
+            const betaLine = this.createLine(0, 0, betaEnd.x, betaEnd.y);
+            betaLine.setAttribute('class', 'reference-line');
+            betaLine.setAttribute('stroke', '#059669');
+            betaLine.setAttribute('stroke-width', '1');
+            betaLine.setAttribute('stroke-dasharray', '2, 2');
+            antennaGroup.appendChild(betaLine);
+            
+            // Draw 180 degree line
+            const line180 = this.createLine(0, 0, 0, outermostRadius);
+            line180.setAttribute('class', 'reference-line');
+            line180.setAttribute('stroke', '#666');
+            line180.setAttribute('stroke-width', '1');
+            line180.setAttribute('stroke-dasharray', '2, 2');
+            antennaGroup.appendChild(line180);
+            
+            // Add angle labels
+            this.addAngleLabels(antennaGroup, outermostRadius, params.alpha);
+        }
         
-        // Add 0° label
+        this.svg.appendChild(antennaGroup);
+    }
+
+    createToothPath(innerRadius, outerRadius, startAngle, endAngle) {
+        // Create a path for a tooth segment
+        const innerStart = MathHelpers.polarToCartesian(innerRadius, startAngle);
+        const innerEnd = MathHelpers.polarToCartesian(innerRadius, endAngle);
+        const outerStart = MathHelpers.polarToCartesian(outerRadius, startAngle);
+        const outerEnd = MathHelpers.polarToCartesian(outerRadius, endAngle);
+        
+        // Determine if we need the large arc flag
+        const angleDiff = endAngle - startAngle;
+        const largeArcFlag = Math.abs(angleDiff) > Math.PI ? 1 : 0;
+        
+        // Build the path
+        const path = `
+            M ${innerStart.x} ${innerStart.y}
+            L ${outerStart.x} ${outerStart.y}
+            A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${outerEnd.x} ${outerEnd.y}
+            L ${innerEnd.x} ${innerEnd.y}
+            A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${innerStart.x} ${innerStart.y}
+            Z
+        `;
+        
+        return path;
+    }
+
+    addAngleLabels(group, radius, alpha) {
+        const beta = 90 - alpha;
+        const labelOffset = 20;
+        
+        // 0° label
         const zeroLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         zeroLabel.setAttribute('x', '0');
-        zeroLabel.setAttribute('y', -outermostRadius - 20);
+        zeroLabel.setAttribute('y', -radius - labelOffset);
         zeroLabel.setAttribute('class', 'dimension-text');
         zeroLabel.setAttribute('text-anchor', 'middle');
+        zeroLabel.setAttribute('fill', '#666');
         zeroLabel.textContent = '0°';
-        antennaGroup.appendChild(zeroLabel);
+        group.appendChild(zeroLabel);
         
-        // Calculate beta
-        const beta = 90 - params.alpha;
-        
-        // Draw alpha line (clockwise from 0°)
-        const alphaRad = MathHelpers.degToRad(params.alpha);
-        const alphaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + alphaRad);
-        const alphaLine = this.createLine(0, 0, alphaEnd.x, alphaEnd.y);
-        alphaLine.setAttribute('class', 'antenna-outline');
-        alphaLine.setAttribute('stroke', '#e11d48'); // Red for alpha
-        alphaLine.setAttribute('stroke-width', '2');
-        antennaGroup.appendChild(alphaLine);
-        
-        // Add alpha label
-        const alphaLabelPos = MathHelpers.polarToCartesian(outermostRadius + 30, -Math.PI/2 + alphaRad);
+        // Alpha label
+        const alphaPos = MathHelpers.polarToCartesian(radius + labelOffset, -Math.PI/2 + MathHelpers.degToRad(alpha));
         const alphaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        alphaLabel.setAttribute('x', alphaLabelPos.x);
-        alphaLabel.setAttribute('y', alphaLabelPos.y);
+        alphaLabel.setAttribute('x', alphaPos.x);
+        alphaLabel.setAttribute('y', alphaPos.y);
         alphaLabel.setAttribute('class', 'dimension-text');
         alphaLabel.setAttribute('text-anchor', 'middle');
         alphaLabel.setAttribute('fill', '#e11d48');
-        alphaLabel.textContent = `α=${params.alpha}°`;
-        antennaGroup.appendChild(alphaLabel);
+        alphaLabel.textContent = `α=${alpha}°`;
+        group.appendChild(alphaLabel);
         
-        // Draw beta line (90 degrees clockwise from 0°)
-        const betaRad = MathHelpers.degToRad(90);
-        const betaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + betaRad);
-        const betaLine = this.createLine(0, 0, betaEnd.x, betaEnd.y);
-        betaLine.setAttribute('class', 'antenna-outline');
-        betaLine.setAttribute('stroke', '#059669'); // Green for beta
-        betaLine.setAttribute('stroke-width', '2');
-        antennaGroup.appendChild(betaLine);
-        
-        // Add beta label
-        const betaLabelPos = MathHelpers.polarToCartesian(outermostRadius + 30, -Math.PI/2 + betaRad);
+        // Beta label
+        const betaPos = MathHelpers.polarToCartesian(radius + labelOffset, 0);
         const betaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        betaLabel.setAttribute('x', betaLabelPos.x);
-        betaLabel.setAttribute('y', betaLabelPos.y);
+        betaLabel.setAttribute('x', betaPos.x);
+        betaLabel.setAttribute('y', betaPos.y);
         betaLabel.setAttribute('class', 'dimension-text');
         betaLabel.setAttribute('text-anchor', 'middle');
         betaLabel.setAttribute('fill', '#059669');
         betaLabel.textContent = `β=${beta}°`;
-        antennaGroup.appendChild(betaLabel);
+        group.appendChild(betaLabel);
         
-        // Draw arc to show alpha
-        const arcRadius = outermostRadius * 0.3;
-        const alphaArcPath = this.createArc(0, 0, arcRadius, -Math.PI/2, -Math.PI/2 + alphaRad);
-        const alphaArc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        alphaArc.setAttribute('d', alphaArcPath);
-        alphaArc.setAttribute('class', 'dimension-line');
-        alphaArc.setAttribute('fill', 'none');
-        alphaArc.setAttribute('stroke', '#e11d48');
-        antennaGroup.appendChild(alphaArc);
-        
-        // Draw arc to show beta
-        const betaArcPath = this.createArc(0, 0, arcRadius * 0.5, -Math.PI/2 + alphaRad, -Math.PI/2 + betaRad);
-        const betaArc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        betaArc.setAttribute('d', betaArcPath);
-        betaArc.setAttribute('class', 'dimension-line');
-        betaArc.setAttribute('fill', 'none');
-        betaArc.setAttribute('stroke', '#059669');
-        antennaGroup.appendChild(betaArc);
-        
-        // Draw mirrored alpha line (alpha degrees past beta)
-        const mirroredAlphaAngle = 90 + params.alpha;
-        const mirroredAlphaRad = MathHelpers.degToRad(mirroredAlphaAngle);
-        const mirroredAlphaEnd = MathHelpers.polarToCartesian(outermostRadius, -Math.PI/2 + mirroredAlphaRad);
-        const mirroredAlphaLine = this.createLine(0, 0, mirroredAlphaEnd.x, mirroredAlphaEnd.y);
-        mirroredAlphaLine.setAttribute('class', 'antenna-outline');
-        mirroredAlphaLine.setAttribute('stroke', '#e11d48'); // Same red as alpha
-        mirroredAlphaLine.setAttribute('stroke-width', '2');
-        mirroredAlphaLine.setAttribute('stroke-dasharray', '5, 5'); // Dashed to differentiate
-        antennaGroup.appendChild(mirroredAlphaLine);
-        
-        // Add mirrored alpha label
-        const mirroredAlphaLabelPos = MathHelpers.polarToCartesian(outermostRadius + 30, -Math.PI/2 + mirroredAlphaRad);
-        const mirroredAlphaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        mirroredAlphaLabel.setAttribute('x', mirroredAlphaLabelPos.x);
-        mirroredAlphaLabel.setAttribute('y', mirroredAlphaLabelPos.y);
-        mirroredAlphaLabel.setAttribute('class', 'dimension-text');
-        mirroredAlphaLabel.setAttribute('text-anchor', 'middle');
-        mirroredAlphaLabel.setAttribute('fill', '#e11d48');
-        mirroredAlphaLabel.textContent = `${mirroredAlphaAngle}°`;
-        antennaGroup.appendChild(mirroredAlphaLabel);
-        
-        // Draw arc to show mirrored alpha from beta
-        const mirroredAlphaArcPath = this.createArc(0, 0, arcRadius * 0.5, -Math.PI/2 + betaRad, -Math.PI/2 + mirroredAlphaRad);
-        const mirroredAlphaArc = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        mirroredAlphaArc.setAttribute('d', mirroredAlphaArcPath);
-        mirroredAlphaArc.setAttribute('class', 'dimension-line');
-        mirroredAlphaArc.setAttribute('fill', 'none');
-        mirroredAlphaArc.setAttribute('stroke', '#e11d48');
-        mirroredAlphaArc.setAttribute('stroke-dasharray', '3, 3');
-        antennaGroup.appendChild(mirroredAlphaArc);
-        
-        this.svg.appendChild(antennaGroup);
+        // 180° label
+        const label180 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label180.setAttribute('x', '0');
+        label180.setAttribute('y', radius + labelOffset + 10);
+        label180.setAttribute('class', 'dimension-text');
+        label180.setAttribute('text-anchor', 'middle');
+        label180.setAttribute('fill', '#666');
+        label180.textContent = '180°';
+        group.appendChild(label180);
     }
 
     createArc(cx, cy, r, startAngle, endAngle) {
@@ -308,12 +313,12 @@ export class AntennaVisualizer {
         tooltip.className = 'antenna-tooltip';
         this.container.appendChild(tooltip);
         
-        // Handle circle hover
-        const circles = this.svg.querySelectorAll('circle.antenna-tooth');
-        circles.forEach(circle => {
-            circle.addEventListener('mouseenter', (e) => this.showTooltip(e, tooltip));
-            circle.addEventListener('mousemove', (e) => this.updateTooltipPosition(e, tooltip));
-            circle.addEventListener('mouseleave', () => this.hideTooltip(tooltip));
+        // Handle tooth hover (now for filled paths)
+        const teeth = this.svg.querySelectorAll('.antenna-tooth-filled');
+        teeth.forEach(tooth => {
+            tooth.addEventListener('mouseenter', (e) => this.showTooltip(e, tooltip));
+            tooth.addEventListener('mousemove', (e) => this.updateTooltipPosition(e, tooltip));
+            tooth.addEventListener('mouseleave', () => this.hideTooltip(tooltip));
         });
         
         // Pan functionality
