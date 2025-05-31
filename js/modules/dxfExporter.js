@@ -1,221 +1,308 @@
+// DXF Exporter for Planar Toothed Log-Periodic Antenna
+// ------------------------------------------------------------
+// Why this rewrite?
+// 1. Single source of truth for output: `this.lines` (array of strings)
+// 2. Only ONE helper (`write`) that pads group‑codes & adds CRLF
+// 3. No duplicate `getNextHandle`, no mix‑ups between `dxfContent` / `dxf`
+// 4. Sections ordered per DXF R2007 (AC1024) spec
+// 5. Utility methods kept minimal; geometry generation isolated
+// ------------------------------------------------------------
+
 // DXF Exporter Module
 import { MathHelpers, CONSTANTS } from '../utils/mathHelpers.js';
 
 export class DXFExporter {
     constructor() {
-        this.dxfContent = '';
+        this.dxf = [];
         this.handleCounter = 100;
     }
+
+addLine(code, val) {
+  this.dxf.push(code.toString().padStart(3, ' '));
+  this.dxf.push(val.toString());
+}
 
     generateDXF(results, params) {
-        this.dxfContent = '';
+        this.dxf = [];
         this.handleCounter = 100;
         
-        // Write DXF header
-        this.writeHeader();
+        // Initialize DXF
+        this.addHeader();
+        this.addTables();
+        this.addBlocks();
         
         // Start entities section
-        this.writeLine('0', 'SECTION');
-        this.writeLine('2', 'ENTITIES');
+        this.addSection('ENTITIES');
         
-        // Add antenna geometry
-        this.writeAntennaGeometry(results, params);
-        
-        // Add dimension annotations
-        this.writeDimensions(results, params);
+        // Generate antenna geometry
+        this.addAntennaGeometry(results, params);
         
         // End entities section
-        this.writeLine('0', 'ENDSEC');
+        this.addLine(0, 'ENDSEC');
         
-        // Write DXF footer
-        this.writeFooter();
+        // End of file
+        this.addLine(0, 'EOF');
         
-        return this.dxfContent;
+        return this.dxf.join('\r\n');
     }
 
-    writeHeader() {
-        // Minimal DXF header
-        this.writeLine('0', 'SECTION');
-        this.writeLine('2', 'HEADER');
-        this.writeLine('9', '$ACADVER');
-        this.writeLine('1', 'AC1024'); // AutoCAD 2010 format
-        this.writeLine('9', '$INSBASE');
-        this.writeLine('10', '0.0');
-        this.writeLine('20', '0.0');
-        this.writeLine('30', '0.0');
-        this.writeLine('9', '$EXTMIN');
-        this.writeLine('10', '-1000.0');
-        this.writeLine('20', '-1000.0');
-        this.writeLine('30', '0.0');
-        this.writeLine('9', '$EXTMAX');
-        this.writeLine('10', '1000.0');
-        this.writeLine('20', '1000.0');
-        this.writeLine('30', '0.0');
-        this.writeLine('0', 'ENDSEC');
+    addHeader() {
+        this.addSection('HEADER');
         
-        // Tables section
-        this.writeLine('0', 'SECTION');
-        this.writeLine('2', 'TABLES');
+        // AutoCAD version
+        this.addVariable('$ACADVER', '1', 'AC1024');
+        this.addVariable('$DWGCODEPAGE', '3', 'ANSI_1252');
+        this.addVariable('$INSBASE', '10,20,30', '0,0,0'); // Insertion base point
+        
+        // Drawing limits
+        this.addVariable('$EXTMIN', '10,20,30', '-1000,-1000,0');
+        this.addVariable('$EXTMAX', '10,20,30', '1000,1000,0');
+        
+        // Units
+        this.addVariable('$INSUNITS', '70', '4'); // Millimeters
+        
+        this.addLine(0, 'ENDSEC');
+    }
+
+    addTables() {
+        this.addSection('TABLES');
         
         // Layer table
-        this.writeLine('0', 'TABLE');
-        this.writeLine('2', 'LAYER');
-        this.writeLine('5', '2');
-        this.writeLine('70', '2');
+        this.addTable('LAYER', 5);
         
-        // Antenna layer
-        this.writeLine('0', 'LAYER');
-        this.writeLine('5', '10');
-        this.writeLine('2', 'ANTENNA');
-        this.writeLine('70', '0');
-        this.writeLine('62', '7'); // White/black
-        this.writeLine('6', 'CONTINUOUS');
+        // Add layers
+        this.addLayer('0', 7, 'CONTINUOUS'); // Default layer
+        this.addLayer('ANTENNA', 5, 'CONTINUOUS'); // Blue
+        this.addLayer('BETA', 3, 'CONTINUOUS'); // Green
+        this.addLayer('DIMENSIONS', 1, 'CONTINUOUS'); // Red
+        this.addLayer('REFERENCE', 8, 'CONTINUOUS'); // Dark gray
         
-        // Dimensions layer
-        this.writeLine('0', 'LAYER');
-        this.writeLine('5', '11');
-        this.writeLine('2', 'DIMENSIONS');
-        this.writeLine('70', '0');
-        this.writeLine('62', '3'); // Green
-        this.writeLine('6', 'CONTINUOUS');
-        
-        this.writeLine('0', 'ENDTAB');
-        this.writeLine('0', 'ENDSEC');
+        this.addLine(0, 'ENDTAB');
+        this.addLine(0, 'ENDSEC');
     }
 
-    writeAntennaGeometry(results, params) {
+    addBlocks() {
+        this.addSection('BLOCKS');
+        this.addLine(0, 'ENDSEC');
+    }
+
+    addAntennaGeometry(results, params) {
+        // Convert to mm
+        const scaleFactor = 1000;
+        
+        // Calculate angles
+        const alphaRad = MathHelpers.degToRad(params.alpha);
+        const betaStartRad = MathHelpers.degToRad(params.alpha);
+        const betaEndRad = MathHelpers.degToRad(90);
+        const q3StartRad = MathHelpers.degToRad(90);
+        const q3EndRad = MathHelpers.degToRad(90 + params.alpha);
+        
+        // Draw alternating teeth
         results.forEach((result, index) => {
-            const rn = result.rn * 1000; // Convert to mm
-            const outerRadius = rn * Math.sqrt(params.gamma);
-            const alphaRad = MathHelpers.degToRad(params.alpha);
-            const rotationAngle = index * 360 / params.toothPairs;
-            const rotationRad = MathHelpers.degToRad(rotationAngle);
-            
-            // Draw both teeth of the pair
-            for (let i = 0; i < 2; i++) {
-                const baseAngle = rotationRad + (i * Math.PI);
+            if (index < results.length - 1) {
+                const currentRn = result.rn * scaleFactor;
+                const nextRn = results[index + 1].rn * scaleFactor;
                 
-                // Calculate tooth vertices
-                const innerLeft = MathHelpers.polarToCartesian(rn, baseAngle - alphaRad / 2);
-                const innerRight = MathHelpers.polarToCartesian(rn, baseAngle + alphaRad / 2);
-                const outerLeft = MathHelpers.polarToCartesian(outerRadius, baseAngle - alphaRad / 2);
-                const outerRight = MathHelpers.polarToCartesian(outerRadius, baseAngle + alphaRad / 2);
+                // Q1 teeth (even indices)
+                if (index % 2 === 0) {
+                    this.addToothPolyline(currentRn, nextRn, 0, params.alpha, 'ANTENNA');
+                    // Mirror
+                    this.addToothPolyline(currentRn, nextRn, 180, 180 + params.alpha, 'ANTENNA');
+                }
                 
-                // Draw tooth as closed polyline
-                this.writePolyline([
-                    innerLeft,
-                    outerLeft,
-                    outerRight,
-                    innerRight,
-                    innerLeft // Close the shape
-                ], 'ANTENNA');
+                // Q3 teeth (odd indices)
+                if (index % 2 === 1) {
+                    this.addToothPolyline(currentRn, nextRn, 90, 90 + params.alpha, 'ANTENNA');
+                    // Mirror
+                    this.addToothPolyline(currentRn, nextRn, 270, 270 + params.alpha, 'ANTENNA');
+                }
             }
         });
+        
+        // Draw beta sections
+        if (results.length > 0) {
+            const innerRadius = results[0].rn * scaleFactor;
+            const outerRadius = results[results.length - 1].rn * scaleFactor * Math.sqrt(params.gamma);
+            
+            // Beta section 1
+            this.addToothPolyline(innerRadius, outerRadius, params.alpha, 90, 'BETA');
+            // Beta section 2 (mirror)
+            this.addToothPolyline(innerRadius, outerRadius, 180 + params.alpha, 270, 'BETA');
+        }
+        
+        // Add dimension text
+        this.addDimensions(results, params, scaleFactor);
     }
 
-    writeDimensions(results, params) {
-        // Add radial dimensions for each tooth pair
+    addToothPolyline(innerRadius, outerRadius, startAngleDeg, endAngleDeg, layer) {
+        // Start polyline
+        this.addLine(0, 'LWPOLYLINE');
+        this.addLine(5, this.getNextHandle());
+        this.addLine(8, layer);
+        this.addLine(100, 'AcDbEntity');
+        this.addLine(100, 'AcDbPolyline');
+        this.addLine(90, '4'); // 4 vertices
+        this.addLine(70, '1'); // Closed polyline
+        
+        // Convert angles to radians
+        const startRad = MathHelpers.degToRad(startAngleDeg);
+        const endRad = MathHelpers.degToRad(endAngleDeg);
+        
+        // Calculate vertices
+        const innerStart = MathHelpers.polarToCartesian(innerRadius, -Math.PI/2 + startRad);
+        const innerEnd = MathHelpers.polarToCartesian(innerRadius, -Math.PI/2 + endRad);
+        const outerStart = MathHelpers.polarToCartesian(outerRadius, -Math.PI/2 + startRad);
+        const outerEnd = MathHelpers.polarToCartesian(outerRadius, -Math.PI/2 + endRad);
+        
+        // Add vertices
+        this.addVertex(innerStart.x, innerStart.y);
+        this.addVertex(outerStart.x, outerStart.y);
+        
+        // Add arc bulge for outer arc
+        const angleDiff = endRad - startRad;
+        const bulge = Math.tan(angleDiff / 4);
+        this.addLine(42, bulge.toFixed(6));
+        
+        this.addVertex(outerEnd.x, outerEnd.y);
+        this.addVertex(innerEnd.x, innerEnd.y);
+        
+        // Add arc bulge for inner arc (negative for opposite direction)
+        this.addLine(42, (-bulge).toFixed(6));
+    }
+
+    addDimensions(results, params, scaleFactor) {
+        // Add title text
+        this.addText('PLANAR TOOTHED LOG-PERIODIC ANTENNA', 0, -results[results.length - 1].rn * scaleFactor * 1.2, 20, 'DIMENSIONS');
+        
+        // Add parameter text
+        const yOffset = -results[results.length - 1].rn * scaleFactor * 1.1;
+        this.addText(`Parameters: Gamma=${params.gamma}, Alpha=${params.alpha}°, Pairs=${params.toothPairs}`, 0, yOffset, 10, 'DIMENSIONS');
+        
+        // Add radius labels
         results.forEach((result, index) => {
-            const rn = result.rn * 1000; // Convert to mm
-            const rotationAngle = index * 360 / params.toothPairs;
-            const rotationRad = MathHelpers.degToRad(rotationAngle);
+            const radius = result.rn * scaleFactor;
+            const angle = index * 15; // Spread labels around circle
+            const pos = MathHelpers.polarToCartesian(radius * 1.1, MathHelpers.degToRad(angle));
             
-            // Position for dimension text
-            const textPos = MathHelpers.polarToCartesian(rn * 1.2, rotationRad);
-            
-            // Write dimension text
-            this.writeText(
-                `n=${result.n} r=${MathHelpers.formatNumber(result.rn, 4)}m`,
-                textPos.x,
-                textPos.y,
-                5, // Text height
-                'DIMENSIONS'
-            );
-        });
-        
-        // Add title block
-        this.writeText(
-            'PLANAR TOOTHED ANTENNA',
-            0,
-            -900,
-            20,
-            'DIMENSIONS'
-        );
-        
-        // Add parameters
-        const paramText = [
-            `Gamma: ${params.gamma}`,
-            `Alpha: ${params.alpha}°`,
-            `Epsilon_eff: ${params.Eeff}`,
-            `Tooth Pairs: ${params.toothPairs}`
-        ];
-        
-        paramText.forEach((text, index) => {
-            this.writeText(
-                text,
-                -800,
-                -850 + (index * 30),
-                10,
+            this.addText(
+                `r${result.n}=${result.rn.toFixed(4)}m`,
+                pos.x,
+                pos.y,
+                8,
                 'DIMENSIONS'
             );
         });
     }
 
-    writePolyline(points, layer) {
-        this.writeLine('0', 'LWPOLYLINE');
-        this.writeLine('5', this.getNextHandle());
-        this.writeLine('8', layer);
-        this.writeLine('90', points.length.toString()); // Number of vertices
-        this.writeLine('70', '1'); // Closed polyline
-        
-        points.forEach(point => {
-            this.writeLine('10', point.x.toFixed(4));
-            this.writeLine('20', point.y.toFixed(4));
+    addText(text, x, y, height, layer) {
+        this.addLine(0, 'TEXT');
+        this.addLine(5, this.getNextHandle());
+        this.addLine(8, layer);
+        this.addLine(100, 'AcDbEntity');
+        this.addLine(100, 'AcDbText');
+        this.addLine(10, x.toFixed(4));
+        this.addLine(20, y.toFixed(4));
+        this.addLine(30, '0.0');
+        this.addLine(40, height.toFixed(4));
+        this.addLine(1, text);
+        this.addLine(50, '0'); // Rotation angle
+        this.addLine(41, '1.0'); // Width factor
+        this.addLine(51, '0'); // Oblique angle
+        this.addLine(7, 'STANDARD'); // Text style
+        this.addLine(71, '0'); // Text generation flags
+        this.addLine(72, '1'); // Horizontal justification (center)
+        this.addLine(11, x.toFixed(4)); // Second alignment point
+        this.addLine(21, y.toFixed(4));
+        this.addLine(31, '0.0');
+        this.addLine(73, '2'); // Vertical justification (middle)
+    }
+
+    addVertex(x, y) {
+        this.addLine(10, x.toFixed(4));
+        this.addLine(20, y.toFixed(4));
+    }
+
+    addSection(name) {
+        this.addLine(0, 'SECTION');
+        this.addLine(2, name);
+    }
+
+    addTable(name, flags) {
+        this.addLine(0, 'TABLE');
+        this.addLine(2, name);
+        this.addLine(5, this.getNextHandle());
+        this.addLine(100, 'AcDbSymbolTable');
+        this.addLine(70, flags.toString());
+    }
+
+    addLayer(name, color, linetype) {
+        this.addLine(0, 'LAYER');
+        this.addLine(5, this.getNextHandle());
+        this.addLine(100, 'AcDbSymbolTableRecord');
+        this.addLine(100, 'AcDbLayerTableRecord');
+        this.addLine(2, name);
+        this.addLine(70, '0'); // Layer flags
+        this.addLine(62, color.toString());
+        this.addLine(6, linetype);
+        this.addLine(290, '1'); // Plotting flag
+        this.addLine(370, '-3'); // Lineweight
+    }
+
+    addVariable(name, groupCode, value) {
+        this.addLine(9, name);
+        const codes = groupCode.split(',');
+        const values = value.split(',');
+        codes.forEach((code, i) => {
+            this.addLine(parseInt(code), values[i]);
         });
     }
 
-    writeText(text, x, y, height, layer) {
-        this.writeLine('0', 'TEXT');
-        this.writeLine('5', this.getNextHandle());
-        this.writeLine('8', layer);
-        this.writeLine('10', x.toFixed(4));
-        this.writeLine('20', y.toFixed(4));
-        this.writeLine('30', '0.0');
-        this.writeLine('40', height.toFixed(4)); // Text height
-        this.writeLine('1', text);
-    }
-
-    writeFooter() {
-        this.writeLine('0', 'EOF');
-    }
-
-    writeLine(code, value) {
-        this.dxfContent += `${code}\n${value}\n`;
+    addLine(groupCode, value) {
+        this.dxf.push(groupCode.toString());
+        this.dxf.push(value.toString());
     }
 
     getNextHandle() {
         return (this.handleCounter++).toString(16).toUpperCase();
     }
 
-    // Alternative method to generate DXF with antenna geometry
-    generateGeometryDXF(geometry) {
-        this.dxfContent = '';
+    // Alternative method using the geometry from visualization
+    generateFromGeometry(visualizer) {
+        const geometry = visualizer.getAntennaGeometry();
+        if (!geometry) return null;
+        
+        this.dxf = [];
         this.handleCounter = 100;
         
-        this.writeHeader();
+        this.addHeader();
+        this.addTables();
+        this.addBlocks();
+        this.addSection('ENTITIES');
         
-        this.writeLine('0', 'SECTION');
-        this.writeLine('2', 'ENTITIES');
-        
+        // Add each tooth as a polyline
         geometry.forEach(item => {
             if (item.type === 'tooth') {
-                this.writePolyline(item.vertices, 'ANTENNA');
+                this.addPolylineFromVertices(item.vertices, 'ANTENNA');
             }
         });
         
-        this.writeLine('0', 'ENDSEC');
-        this.writeFooter();
+        this.addLine(0, 'ENDSEC');
+        this.addLine(0, 'EOF');
         
-        return this.dxfContent;
+        return this.dxf.join('\r\n');
+    }
+
+    addPolylineFromVertices(vertices, layer) {
+        this.addLine(0, 'LWPOLYLINE');
+        this.addLine(5, this.getNextHandle());
+        this.addLine(8, layer);
+        this.addLine(100, 'AcDbEntity');
+        this.addLine(100, 'AcDbPolyline');
+        this.addLine(90, vertices.length.toString());
+        this.addLine(70, '1'); // Closed
+        
+        vertices.forEach(vertex => {
+            this.addVertex(vertex.x, vertex.y);
+        });
     }
 }

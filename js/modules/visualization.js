@@ -486,36 +486,88 @@ export class AntennaVisualizer {
         const { results, params } = this.currentData;
         const geometry = [];
         
+        // Calculate angles
+        const alphaRad = MathHelpers.degToRad(params.alpha);
+        const betaStartRad = MathHelpers.degToRad(params.alpha);
+        const betaEndRad = MathHelpers.degToRad(90);
+        const q3StartRad = MathHelpers.degToRad(90);
+        const q3EndRad = MathHelpers.degToRad(90 + params.alpha);
+        
+        // Generate alternating teeth
         results.forEach((result, index) => {
-            const rn = result.rn * 1000; // Convert to mm
-            const outerRadius = rn * Math.sqrt(params.gamma);
-            const alphaRad = MathHelpers.degToRad(params.alpha);
-            const rotationAngle = index * 360 / params.toothPairs;
-            const rotationRad = MathHelpers.degToRad(rotationAngle);
-            
-            // Generate both teeth of the pair
-            for (let i = 0; i < 2; i++) {
-                const baseAngle = rotationRad + (i * Math.PI);
+            if (index < results.length - 1) {
+                const currentRn = result.rn * 1000; // Convert to mm
+                const nextRn = results[index + 1].rn * 1000;
                 
-                // Calculate tooth vertices
-                const innerLeft = MathHelpers.polarToCartesian(rn, baseAngle - alphaRad / 2);
-                const innerRight = MathHelpers.polarToCartesian(rn, baseAngle + alphaRad / 2);
-                const outerLeft = MathHelpers.polarToCartesian(outerRadius, baseAngle - alphaRad / 2);
-                const outerRight = MathHelpers.polarToCartesian(outerRadius, baseAngle + alphaRad / 2);
+                // Q1 teeth (even indices)
+                if (index % 2 === 0) {
+                    // First quadrant
+                    geometry.push({
+                        type: 'tooth',
+                        quadrant: 'Q1',
+                        toothPair: `${result.n}-${results[index + 1].n}`,
+                        vertices: this.getToothVertices(currentRn, nextRn, -Math.PI/2, -Math.PI/2 + alphaRad)
+                    });
+                    
+                    // Mirror quadrant
+                    geometry.push({
+                        type: 'tooth',
+                        quadrant: 'Q1-mirror',
+                        toothPair: `${result.n}-${results[index + 1].n}`,
+                        vertices: this.getToothVertices(currentRn, nextRn, Math.PI/2, Math.PI/2 + alphaRad)
+                    });
+                }
                 
-                geometry.push({
-                    type: 'tooth',
-                    toothPair: result.n,
-                    vertices: [
-                        innerLeft,
-                        outerLeft,
-                        outerRight,
-                        innerRight
-                    ]
-                });
+                // Q3 teeth (odd indices)
+                if (index % 2 === 1) {
+                    // Third quadrant
+                    geometry.push({
+                        type: 'tooth',
+                        quadrant: 'Q3',
+                        toothPair: `${result.n}-${results[index + 1].n}`,
+                        vertices: this.getToothVertices(currentRn, nextRn, -Math.PI/2 + q3StartRad, -Math.PI/2 + q3EndRad)
+                    });
+                    
+                    // Mirror quadrant
+                    geometry.push({
+                        type: 'tooth',
+                        quadrant: 'Q3-mirror',
+                        toothPair: `${result.n}-${results[index + 1].n}`,
+                        vertices: this.getToothVertices(currentRn, nextRn, Math.PI/2 + q3StartRad, Math.PI/2 + q3EndRad)
+                    });
+                }
             }
         });
         
+        // Add beta sections
+        if (results.length > 0) {
+            const innerRadius = results[0].rn * 1000;
+            const outerRadius = results[results.length - 1].rn * 1000 * Math.sqrt(params.gamma);
+            
+            // Beta section 1
+            geometry.push({
+                type: 'beta',
+                quadrant: 'Q2',
+                vertices: this.getToothVertices(innerRadius, outerRadius, -Math.PI/2 + betaStartRad, -Math.PI/2 + betaEndRad)
+            });
+            
+            // Beta section 2 (mirror)
+            geometry.push({
+                type: 'beta',
+                quadrant: 'Q2-mirror',
+                vertices: this.getToothVertices(innerRadius, outerRadius, Math.PI/2 + betaStartRad, Math.PI/2 + betaEndRad)
+            });
+        }
+        
         return geometry;
+    }
+    
+    getToothVertices(innerRadius, outerRadius, startAngle, endAngle) {
+        const innerStart = MathHelpers.polarToCartesian(innerRadius, startAngle);
+        const innerEnd = MathHelpers.polarToCartesian(innerRadius, endAngle);
+        const outerStart = MathHelpers.polarToCartesian(outerRadius, startAngle);
+        const outerEnd = MathHelpers.polarToCartesian(outerRadius, endAngle);
+        
+        return [innerStart, outerStart, outerEnd, innerEnd];
     }
 }
