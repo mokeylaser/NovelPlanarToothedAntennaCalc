@@ -206,21 +206,34 @@ class AntennaCalcApp {
         container.classList.add('fade-in');
     }
 
-    handleExport() {
-        if (!this.currentResults) return;
-        
-        const params = this.getFormParameters();
-        const dxfContent = this.dxfExporter.generateDXF(this.currentResults, params);
-        
-        // Create and download file
-        const blob = new Blob([dxfContent], { type: 'application/dxf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `antenna_${Date.now()}.dxf`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
+   handleExport () {
+  if (!this.currentResults) return;
+
+  const params     = this.getFormParameters();
+  const dxfContent = this.dxfExporter.generateDXF(this.currentResults, params);
+
+  // 1️⃣  Explicitly encode as Windows-1252 so it matches $DWGCODEPAGE
+  const encoder = new TextEncoder('windows-1252');    // fails back to UTF-8 in some browsers
+  const uint8   = encoder.encode(dxfContent);
+
+  const blob = new Blob([uint8], { type: 'application/dxf' });
+  const url  = URL.createObjectURL(blob);
+
+  // 2️⃣  Create a temporary anchor, append to DOM (Firefox quirk), click, then clean up
+  const a = document.createElement('a');
+  a.href      = url;
+  a.download  = `antenna_${Date.now()}.dxf`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+
+  // 3️⃣  Revoke *after* the event loop ticks so the download stream is open
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }, 0);
+}
+
 
     showErrors(errors) {
         Object.keys(errors).forEach(id => {
