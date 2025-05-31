@@ -1,13 +1,13 @@
 // Main Application Module
 import { AntennaCalculator } from './modules/calculator.js';
 import { AntennaVisualizer } from './modules/visualization.js';
-import { DXFExporter } from './modules/dxfExporter.js';
+// import { DXFExporter } from './modules/dxfExporter.js';
 
 class AntennaCalcApp {
     constructor() {
         this.calculator = new AntennaCalculator();
         this.visualizer = new AntennaVisualizer();
-        this.dxfExporter = new DXFExporter();
+        // this.dxfExporter = new DXFExporter();
         
         this.currentResults = null;
         this.init();
@@ -33,9 +33,14 @@ class AntennaCalcApp {
         });
 
         // Export button
-        const exportBtn = document.getElementById('export-dxf');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.handleExport());
+        // const exportDxfBtn = document.getElementById('export-dxf');
+        // if (exportDxfBtn) {
+        //     exportDxfBtn.addEventListener('click', () => this.handleDxfExport());
+        // }
+        
+        const exportSvgBtn = document.getElementById('export-svg');
+        if (exportSvgBtn) {
+            exportSvgBtn.addEventListener('click', () => this.handleSvgExport());
         }
 
         // Real-time validation
@@ -96,7 +101,7 @@ class AntennaCalcApp {
             this.visualizer.drawAntenna(results, params);
             
             // Enable export button
-            document.getElementById('export-dxf').disabled = false;
+            // document.getElementById('export-dxf').disabled = false;
             
             // Show results card
             document.getElementById('results-card').classList.remove('hidden');
@@ -206,34 +211,31 @@ class AntennaCalcApp {
         container.classList.add('fade-in');
     }
 
-   handleExport () {
-  if (!this.currentResults) return;
-
-  const params     = this.getFormParameters();
-  const dxfContent = this.dxfExporter.generateDXF(this.currentResults, params);
-
-  // 1️⃣  Explicitly encode as Windows-1252 so it matches $DWGCODEPAGE
-  const encoder = new TextEncoder('windows-1252');    // fails back to UTF-8 in some browsers
-  const uint8   = encoder.encode(dxfContent);
-
-  const blob = new Blob([uint8], { type: 'application/dxf' });
-  const url  = URL.createObjectURL(blob);
-
-  // 2️⃣  Create a temporary anchor, append to DOM (Firefox quirk), click, then clean up
-  const a = document.createElement('a');
-  a.href      = url;
-  a.download  = `antenna_${Date.now()}.dxf`;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-
-  // 3️⃣  Revoke *after* the event loop ticks so the download stream is open
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  }, 0);
-}
-
+    // handleDxfExport() {
+    //     if (!this.currentResults) return;
+        
+    //     const params = this.getFormParameters();
+    //     const dxfContent = this.dxfExporter.generateDXF(this.currentResults, params);
+        
+    //     // Create and download file
+    //     const blob = new Blob([dxfContent], { type: 'application/dxf' });
+    //     const url = URL.createObjectURL(blob);
+    //     const a = document.createElement('a');
+    //     a.href = url;
+    //     a.download = `antenna_${Date.now()}.dxf`;
+    //     a.click();
+    //     URL.revokeObjectURL(url);
+    // }
+    
+    handleSvgExport() {
+        if (!this.currentResults) return;
+        
+        const params = this.getFormParameters();
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const filename = `antenna_${params.alpha}deg_${params.toothPairs}pairs_${timestamp}.svg`;
+        
+        this.visualizer.exportSVG(filename);
+    }
 
     showErrors(errors) {
         Object.keys(errors).forEach(id => {
