@@ -478,6 +478,26 @@ export class AntennaVisualizer {
     getSVGContent() {
         return this.svg ? this.svg.outerHTML : null;
     }
+    
+    // Export SVG as downloadable file
+    exportSVG(filename = 'antenna_design.svg') {
+        if (!this.svg) return;
+        
+        // Clone the SVG to avoid modifying the original
+        const svgClone = this.svg.cloneNode(true);
+        
+        // Add XML declaration and namespace
+        const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgClone.outerHTML;
+        
+        // Create blob and download
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 
     // Get antenna geometry data for DXF export
     getAntennaGeometry() {
