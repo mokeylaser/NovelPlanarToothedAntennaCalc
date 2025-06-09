@@ -328,6 +328,25 @@ p {
     overflow: hidden;
 }
 
+.app-footer-text {
+    background: var(--bg-dark);
+    color: var(--text-light);
+    padding: var(--spacing-lg);
+    text-align: center;
+    font-size: 0.875rem;
+    position: relative;
+    overflow: hidden;
+}
+.reference-link {
+    color: var(--primary-color);
+    text-decoration: underline;
+    transition: color var(--transition-base);
+}
+
+.reference-link:hover {
+    color: var(--primary-hover);
+}
+
 .app-footer::before {
     content: '';
     position: absolute;
