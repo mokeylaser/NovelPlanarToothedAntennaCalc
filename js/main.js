@@ -162,8 +162,8 @@ class AntennaCalcApp {
             errors['Eeff-error'] = 'Effective permittivity (εₑff) must be greater than or equal to 1';
         }
         
-        if (isNaN(params.toothPairs) || params.toothPairs < 1 || params.toothPairs > 10) {
-            errors['toothPairs-error'] = 'Number of tooth pairs must be between 1 and 10';
+        if (isNaN(params.toothPairs) || params.toothPairs < 1 || params.toothPairs > 16) {
+            errors['toothPairs-error'] = 'Number of tooth pairs must be 16 or fewer';
         }
         
         return {
