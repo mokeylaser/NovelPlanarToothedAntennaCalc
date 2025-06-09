@@ -145,6 +145,7 @@ p {
 /* App Header */
 .app-header {
     background: rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
     padding: var(--spacing-xl) var(--spacing-lg);
@@ -257,6 +258,7 @@ p {
 /* Card Component */
 .card {
     background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-xl);
     padding: var(--spacing-xl);

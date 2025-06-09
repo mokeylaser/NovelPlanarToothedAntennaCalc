@@ -323,20 +323,6 @@ select:focus {
 .calculate-btn.loading::after {
     content: '';
     position: absolute;
-    width: /* Loading Animation for Calculate Button */
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.calculate-btn.loading {
-    color: transparent;
-}
-
-.calculate-btn.loading::after {
-    content: '';
-    position: absolute;
     width: 20px;
     height: 20px;
     top: 50%;
