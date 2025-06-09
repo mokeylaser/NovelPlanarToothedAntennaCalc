@@ -34,27 +34,27 @@
                                 <p class="input-label">Input Mode:</p>
                                 <div class="radio-group">
                                     <label class="radio-label">
-                                        <input type="radio" name="inputMode" value="r1" checked>
+                                        <input type="radio" name="inputMode" value="r1">
                                         <span>Initial Inner Tooth Radius (r₁)</span>
                                     </label>
                                     <label class="radio-label">
-                                        <input type="radio" name="inputMode" value="f1">
+                                        <input type="radio" name="inputMode" value="f1" checked>
                                         <span>Starting Frequency (f₁)</span>
                                     </label>
                                 </div>
                             </div>
 
                             <!-- Dynamic Input Fields -->
-                            <div id="r1-input" class="form-group">
+                            <div id="r1-input" class="form-group hidden">
                                 <label for="r1">Initial Inner Tooth Radius (r₁) [m]:</label>
-                                <input type="number" id="r1" step="any" required>
+                                <input type="number" id="r1" step="any">
                                 <span class="error-message" id="r1-error"></span>
                             </div>
 
-                            <div id="f1-input" class="form-group hidden">
+                            <div id="f1-input" class="form-group">
                                 <label for="f1">Starting Frequency (f₁):</label>
                                 <div class="input-with-unit">
-                                    <input type="number" id="f1" value= "144" step="any">
+                                    <input type="number" id="f1" value= "144" step="any" required>
                                     <select id="f1-unit" class="unit-select" title="Frequency unit selection">
                                         <option value="Hz">Hz</option>
                                         <option value="kHz">kHz</option>
