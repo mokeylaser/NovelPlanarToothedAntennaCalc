@@ -36,24 +36,24 @@
                                 <p class="input-label">Input Mode:</p>
                                 <div class="radio-group">
                                     <label class="radio-label">
-                                        <input type="radio" name="inputMode" value="r1" data-target="#r1-input">
+                                        <input type="radio" name="inputMode" value="r1" checked>
                                         <span>Initial Inner Tooth Radius (r₁)</span>
                                     </label>
                                     <label class="radio-label">
-                                        <input type="radio" name="inputMode" value="f1" checked>
+                                        <input type="radio" name="inputMode" value="f1">
                                         <span>Starting Frequency (f₁)</span>
                                     </label>
                                 </div>
                             </div>
 
                             <!-- Dynamic Input Fields -->
-                            <div id="r1-input" class="form-group hidden">
+                            <div id="r1-input" class="form-group">
                                 <label for="r1">Initial Inner Tooth Radius (r₁) [m]:</label>
-                                <input type="number" id="r1" step="any">
+                                <input type="number" id="r1" step="any" required>
                                 <span class="error-message" id="r1-error"></span>
                             </div>
 
-                            <div id="f1-input" class="form-group">
+                            <div id="f1-input" class="form-group hidden">
                                 <label for="f1"
                                 data-tippy-content="This will determine the size of the innermost tooth or outermost tooth, depending on the scaling factor (Γ).">
                                 Starting Frequency (f₁):    
@@ -193,6 +193,6 @@
     tippy('[data-tippy-content]');
 </script>
 <script type="module" src="js/main.js"></script>
-   </script>
+</script>
 </body>
 </html>

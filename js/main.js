@@ -30,6 +30,7 @@ class AntennaCalcApp {
 
         // Input mode change
         const radioInputs = document.querySelectorAll('input[name="inputMode"]');
+        console.log('Found radio inputs',radioInputs.length);
         radioInputs.forEach(radio => {
             radio.addEventListener('change', () => this.handleInputModeChange());
         });
@@ -54,7 +55,7 @@ class AntennaCalcApp {
 
     setupInitialState() {
         // Set default values if needed
-        this.handleInputModeChange();
+        this.handleInputModeChange(); 
     }
 
     handleInputModeChange() {
