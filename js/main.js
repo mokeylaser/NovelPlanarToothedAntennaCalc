@@ -2,6 +2,8 @@
 import { AntennaCalculator } from './modules/calculator.js';
 import { AntennaVisualizer } from './modules/visualization.js';
 // import { DXFExporter } from './modules/dxfExporter.js';
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css'; // Optional: for default styles   
 
 class AntennaCalcApp {
     constructor() {
@@ -264,8 +266,14 @@ class AntennaCalcApp {
         });
     }
 }
-
+ tippy('[data-tippy-content]', {
+        trigger: 'mouseenter focus', // show on hover or focus
+        placement: 'right',        // or 'top', 'bottom'…
+        animation: 'shift-away',   // nice subtle slide
+        theme: 'light-border',     // built-in theme
+        allowHTML: true            // if you ever slip in <strong> or MathJax
+    });
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.antennaCalcApp = new AntennaCalcApp();
+   window.antennaCalcApp = new AntennaCalcApp();
 });

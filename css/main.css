@@ -129,6 +129,11 @@ h3 {
     margin-bottom: var(--spacing-sm);
 }
 
+h4 {
+    font-size: .75rem;
+    margin-bottom: var(--spacing-sm);
+}
+
 p {
     margin-bottom: var(--spacing-md);
 }

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "makerjs": "^0.18.1"
+    "makerjs": "^0.18.1",
+    "tippy": "^0.0.0"
   }
 }
