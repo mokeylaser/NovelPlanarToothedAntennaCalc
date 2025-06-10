@@ -2,8 +2,7 @@
 import { AntennaCalculator } from './modules/calculator.js';
 import { AntennaVisualizer } from './modules/visualization.js';
 // import { DXFExporter } from './modules/dxfExporter.js';
-import tippy from 'tippy.js';
-import 'tippy.js/dist/tippy.css'; // Optional: for default styles   
+  
 
 class AntennaCalcApp {
     constructor() {
@@ -278,6 +277,5 @@ class AntennaCalcApp {
 document.addEventListener('DOMContentLoaded', () => {
     
    window.antennaCalcApp = new AntennaCalcApp();
-   AntennaCalcApp.init(); // Initialize the app
    console.log('AntennaCalcApp initialized');
 });
