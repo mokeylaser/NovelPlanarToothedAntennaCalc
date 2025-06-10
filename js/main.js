@@ -62,7 +62,7 @@ class AntennaCalcApp {
         const inputMode = document.querySelector('input[name="inputMode"]:checked').value;
         const r1Input = document.getElementById('r1-input');
         const f1Input = document.getElementById('f1-input');
-        
+        console.log('mode changed')
         if (inputMode === 'r1') {
             r1Input.classList.remove('hidden');
             f1Input.classList.add('hidden');
@@ -276,5 +276,8 @@ class AntennaCalcApp {
     });
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    
    window.antennaCalcApp = new AntennaCalcApp();
+   AntennaCalcApp.init(); // Initialize the app
+   console.log('AntennaCalcApp initialized');
 });
