@@ -10,12 +10,12 @@ export class AntennaVisualizer {
         this.currentData = null;
     }
 
-    drawAntenna(results, params) {
+    drawAntenna(results, params, feedGap) {
         this.currentData = { results, params };
         this.clearVisualization();
         this.createSVG();
         this.drawGrid();
-        this.drawAntennaGeometry(results, params);
+        this.drawAntennaGeometry(results, params, feedGap);
         this.addZoomControls();
         this.setupInteractions();
     }
@@ -29,7 +29,6 @@ export class AntennaVisualizer {
         this.svg.setAttribute('class', 'antenna-svg');
         this.svg.setAttribute('viewBox', `${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.width} ${this.viewBox.height}`);
         this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-        
         this.container.appendChild(this.svg);
     }
 
@@ -77,14 +76,13 @@ export class AntennaVisualizer {
         yAxis.setAttribute('class', 'grid-line grid-major');
         yAxis.setAttribute('stroke-width', '2');
         gridGroup.appendChild(yAxis);
-        
         this.svg.appendChild(gridGroup);
     }
 
-    drawAntennaGeometry(results, params) {
+    drawAntennaGeometry(results, params, feedGap) {
         const antennaGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         antennaGroup.setAttribute('class', 'antenna-group');
-        
+        const SVG_NS = 'http://www.w3.org/2000/svg';
         // Calculate scale factor to fit antenna in viewport
         const maxRadius = results[results.length - 1].rn * 1000; // Convert to mm
         const outerRadiusMax = maxRadius * Math.sqrt(params.gamma);
@@ -97,6 +95,7 @@ export class AntennaVisualizer {
         const q3StartRad = MathHelpers.degToRad(90); // Q3 starts at 90 degrees
         const q3EndRad = MathHelpers.degToRad(90 + params.alpha); // Q3 ends at 90 + alpha
         
+               
         // Draw alternating teeth in Q1 (0 to alpha degrees)
         results.forEach((result, index) => {
             if (index < results.length - 1) {
@@ -130,68 +129,108 @@ export class AntennaVisualizer {
                 }
             }
         });
-        
-        // Draw the solid beta section (Q2: from alpha to 90 degrees)
+
+                
+               /* ────────── Q2: solid β-section + feed gap ────────── */
         if (results.length > 0) {
-            const innerRadius = results[0].rn * 1000 * scaleFactor; // Smallest radius
-            const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma); // Largest radius
-            
-            const betaPath = this.createToothPath(innerRadius, outerRadius, -Math.PI/2 + betaStartRad, -Math.PI/2 + betaEndRad);
-            const betaSection = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const innerRadius = results[0].rn * 1000 * scaleFactor; // smallest
+            const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma); // largest
+
+            // β-section (first half-plane)
+            const betaPath = this.createToothPath(
+                innerRadius,
+                outerRadius,
+                -Math.PI / 2 + betaStartRad,
+                -Math.PI / 2 + betaEndRad
+            );
+            const betaSection = document.createElementNS(SVG_NS, 'path');
             betaSection.setAttribute('d', betaPath);
             betaSection.setAttribute('class', 'antenna-tooth-filled beta-section');
             betaSection.setAttribute('data-section', 'beta');
             betaSection.setAttribute('data-angle', `${params.alpha}°-90°`);
             antennaGroup.appendChild(betaSection);
-        }
-        
-        // Draw the other half of the dipole (180 degrees rotated)
+
+            /* ----- feed-gap indicator (tiny red bar at the apex) ----- */
+            if (feedGap && !isNaN(feedGap)) {
+                const gMeters   = Number(feedGap);          // metres
+                const gSvg      = gMeters * 1000 * scaleFactor; // convert → mm → SVG-units
+                const halfG     = 0.5 * gSvg;
+                const barHeight = params.r1 * 1000 * 0.02 * scaleFactor;
+
+                const gapRect = document.createElementNS(SVG_NS, 'rect');
+                gapRect.setAttribute('x', (-halfG).toString());
+                gapRect.setAttribute('y', (-barHeight).toString());
+                gapRect.setAttribute('width', gSvg.toString());
+                gapRect.setAttribute('height', (barHeight * 2).toString());
+                gapRect.setAttribute('fill', '#ef4444');
+                gapRect.setAttribute(
+                    'data-tippy-content',
+                    `Feed gap ≈ ${(gMeters * 1e3).toFixed(1)} mm`
+                );
+                this.svg.appendChild(gapRect);
+            } // ← closes feed-gap IF
+        } // ← *** closes the big “if (results.length > 0)” block that was missing ***
+
+
+        /* ────────── Other half of dipole (180° rotated) ────────── */
         results.forEach((result, index) => {
             if (index < results.length - 1) {
                 const currentRn = result.rn * 1000 * scaleFactor;
-                const nextRn = results[index + 1].rn * 1000 * scaleFactor;
-                
-                // Mirror Q1: Even indices, 180 degrees from Q1
+                const nextRn    = results[index + 1].rn * 1000 * scaleFactor;
+
+                // mirror Q1
                 if (index % 2 === 0) {
-                    const tooth1MirrorPath = this.createToothPath(currentRn, nextRn, Math.PI/2, Math.PI/2 + alphaRad);
-                    const tooth1Mirror = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    tooth1Mirror.setAttribute('d', tooth1MirrorPath);
-                    tooth1Mirror.setAttribute('class', 'antenna-tooth-filled quadrant-1-mirror');
-                    tooth1Mirror.setAttribute('data-tooth-index', index);
-                    tooth1Mirror.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
-                    tooth1Mirror.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
-                    tooth1Mirror.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
-                    antennaGroup.appendChild(tooth1Mirror);
+                    const p = this.createToothPath(
+                        currentRn, nextRn,
+                        Math.PI / 2,
+                        Math.PI / 2 + alphaRad
+                    );
+                    const el = document.createElementNS(SVG_NS, 'path');
+                    el.setAttribute('d', p);
+                    el.setAttribute('class', 'antenna-tooth-filled quadrant-1-mirror');
+                    el.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
+                    el.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
+                    el.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
+                    antennaGroup.appendChild(el);
                 }
-                
-                // Mirror Q3: Odd indices, 180 degrees from Q3
+
+                // mirror Q3
                 if (index % 2 === 1) {
-                    const tooth3MirrorPath = this.createToothPath(currentRn, nextRn, Math.PI/2 + q3StartRad, Math.PI/2 + q3EndRad);
-                    const tooth3Mirror = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    tooth3Mirror.setAttribute('d', tooth3MirrorPath);
-                    tooth3Mirror.setAttribute('class', 'antenna-tooth-filled quadrant-3-mirror');
-                    tooth3Mirror.setAttribute('data-tooth-index', index);
-                    tooth3Mirror.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
-                    tooth3Mirror.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
-                    tooth3Mirror.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
-                    antennaGroup.appendChild(tooth3Mirror);
+                    const p = this.createToothPath(
+                        currentRn, nextRn,
+                        Math.PI / 2 + q3StartRad,
+                        Math.PI / 2 + q3EndRad
+                    );
+                    const el = document.createElementNS(SVG_NS, 'path');
+                    el.setAttribute('d', p);
+                    el.setAttribute('class', 'antenna-tooth-filled quadrant-3-mirror');
+                    el.setAttribute('data-tooth-pair', `${result.n}-${results[index + 1].n}`);
+                    el.setAttribute('data-frequency', `${result.fnDisplay.toFixed(3)}-${results[index + 1].fnDisplay.toFixed(3)}`);
+                    el.setAttribute('data-radius', `${result.rn.toFixed(6)}-${results[index + 1].rn.toFixed(6)}`);
+                    antennaGroup.appendChild(el);
                 }
             }
         });
-        
-        // Draw the mirrored beta section
+
+        /* ────────── mirrored β-section (second half-plane) ────────── */
         if (results.length > 0) {
             const innerRadius = results[0].rn * 1000 * scaleFactor;
             const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
-            
-            const betaMirrorPath = this.createToothPath(innerRadius, outerRadius, Math.PI/2 + betaStartRad, Math.PI/2 + betaEndRad);
-            const betaMirrorSection = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            betaMirrorSection.setAttribute('d', betaMirrorPath);
-            betaMirrorSection.setAttribute('class', 'antenna-tooth-filled beta-section-mirror');
-            betaMirrorSection.setAttribute('data-section', 'beta-mirror');
-            betaMirrorSection.setAttribute('data-angle', `${180 + params.alpha}°-270°`);
-            antennaGroup.appendChild(betaMirrorSection);
+
+            const p = this.createToothPath(
+                innerRadius,
+                outerRadius,
+                Math.PI / 2 + betaStartRad,
+                Math.PI / 2 + betaEndRad
+            );
+            const el = document.createElementNS(SVG_NS, 'path');
+            el.setAttribute('d', p);
+            el.setAttribute('class', 'antenna-tooth-filled beta-section-mirror');
+            el.setAttribute('data-section', 'beta-mirror');
+            el.setAttribute('data-angle', `${180 + params.alpha}°-270°`);
+            antennaGroup.appendChild(el);
         }
+
         
         // Draw reference lines (optional)
         const showReferenceLines = true;

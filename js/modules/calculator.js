@@ -1,6 +1,15 @@
 // Antenna Calculator Module
 import { CONSTANTS } from '../utils/mathHelpers.js';
 
+// ───────── FEED-GAP Rule-of-Thumb ─────────
+export function calcFeedGapMeters({ epsilonEff, freqHz, C = CONSTANTS.C }) {
+    // λ0 in meters
+    const lambda0 = C / freqHz;
+    return 0.02066 * lambda0 / Math.sqrt(epsilonEff);
+}
+// ──────────────────────────────────────────
+// Antenna Calculator Module
+
 export class AntennaCalculator {
     constructor() {
         this.C = CONSTANTS.C; // Speed of light
@@ -36,10 +45,14 @@ export class AntennaCalculator {
             // Update rn for next tooth pair
             rn = rn * params.gamma;
         }
-        
-        return results;
+        const feedGap = calcFeedGapMeters({
+            epsilonEff: params.epsilonEff,
+            freqHz: results[0].frequencyHz,   // use f₁ regardless of input mode
+    });
+       return { results, feedGap: Number(feedGap) };        // <── wrapped object now
     }
-
+    
+    // Calculate r1 from f1 and other parameters
     calculateR1FromF1(params) {
         // Convert f1 to Hz
         const f1Hz = this.convertToHz(params.f1, params.f1Unit);

@@ -1,3 +1,4 @@
+console.log('[main.js] loaded at', new Date());
 // Main Application Module
 import { AntennaCalculator } from './modules/calculator.js';
 import { AntennaVisualizer } from './modules/visualization.js';
@@ -61,7 +62,9 @@ class AntennaCalcApp {
         const inputMode = document.querySelector('input[name="inputMode"]:checked').value;
         const r1Input = document.getElementById('r1-input');
         const f1Input = document.getElementById('f1-input');
+
         console.log('mode changed')
+
         if (inputMode === 'r1') {
             r1Input.classList.remove('hidden');
             f1Input.classList.add('hidden');
@@ -78,29 +81,27 @@ class AntennaCalcApp {
     }
 
     handleCalculate() {
+       
+        // Clear previous results and errors
         this.clearAllErrors();
-        
-        // Get input values
+
         const inputMode = document.querySelector('input[name="inputMode"]:checked').value;
         const params = this.getFormParameters();
-        
-        // Validate inputs
-        const validation = this.validateInputs(params, inputMode);
-        if (!validation.valid) {
-            this.showErrors(validation.errors);
-            return;
-        }
+
+  if (!this.validateInputs(params)) return;
         
         // Calculate results
         try {
-            const results = this.calculator.calculate(params, inputMode);
+            const { results, feedGap } = this.calculator.calculate(params, inputMode);
             this.currentResults = results;
-            
+            this.currentFeedGap = feedGap;
+
             // Display results
-            this.displayResults(results, params);
-            
+            this.displayResults(results, params, feedGap);
+                                        
             // Update visualization
-            this.visualizer.drawAntenna(results, params);
+            this.visualizer.drawAntenna(this.currentResults, params, this.currentFeedGap);
+            // this.visualizer.updateFeedGap(feedGap);
             
             // Enable export button
             // document.getElementById('export-dxf').disabled = false;
@@ -174,13 +175,18 @@ class AntennaCalcApp {
         };
     }
 
-    displayResults(results, params) {
+    displayResults(results, params,) {
         const container = document.getElementById('results-container');
         
         // Create results table
         let tableHTML = `
             <table class="results-table">
                 <thead>
+                    <tr class="bg-slate-100 font-semibold">
+                    <td colspan="2">Feed-gap (g)</td>
+                    <td>${(this.currentFeedGap * 39.3701).toFixed(3)}&nbsp;in</td>
+                    <td>${this.currentFeedGap.toFixed(6)}&nbsp;m</td>
+                    </tr>
                     <tr>
                         <th>Tooth Pair (n)</th>
                         <th>Inner Radius (rₙ) [m]</th>
@@ -191,6 +197,7 @@ class AntennaCalcApp {
                 <tbody>
         `;
         
+
         results.forEach(result => {
             tableHTML += `
                 <tr>
@@ -266,16 +273,16 @@ class AntennaCalcApp {
         });
     }
 }
- tippy('[data-tippy-content]', {
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    tippy('[data-tippy-content]', {
         trigger: 'mouseenter focus', // show on hover or focus
-        placement: 'right',        // or 'top', 'bottom'…
+        placement: 'top',        // or 'top', 'bottom'…
         animation: 'shift-away',   // nice subtle slide
         theme: 'light-border',     // built-in theme
         allowHTML: true            // if you ever slip in <strong> or MathJax
-    });
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    
+    }); 
    window.antennaCalcApp = new AntennaCalcApp();
    console.log('AntennaCalcApp initialized');
 });
