@@ -25,6 +25,7 @@ export class AntennaCalculator {
         } else {
             // Calculate r1 from f1
             r1 = this.calculateR1FromF1(params);
+            params.r1 = r1; // Store calculated r1 in params
         }
         
         // Calculate results for all tooth pairs

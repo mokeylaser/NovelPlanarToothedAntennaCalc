@@ -163,10 +163,7 @@ export class AntennaVisualizer {
                 gapRect.setAttribute('width', gSvg.toString());
                 gapRect.setAttribute('height', (barHeight * 2).toString());
                 gapRect.setAttribute('fill', '#ef4444');
-                gapRect.setAttribute(
-                    'data-tippy-content',
-                    `Feed gap ≈ ${(gMeters * 1e3).toFixed(1)} mm`
-                );
+                gapRect.setAttribute('data-tippy-content',`Feed gap ≈ ${(gMeters * 1e3).toFixed(1)} mm`);
                 this.svg.appendChild(gapRect);
             } // ← closes feed-gap IF
         } // ← *** closes the big “if (results.length > 0)” block that was missing ***
