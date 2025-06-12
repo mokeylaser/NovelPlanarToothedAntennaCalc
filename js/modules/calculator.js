@@ -46,9 +46,9 @@ export class AntennaCalculator {
             rn = rn * params.gamma;
         }
         const feedGap = calcFeedGapMeters({
-            epsilonEff: params.epsilonEff,
-            freqHz: results[0].frequencyHz,   // use f₁ regardless of input mode
-    });
+            epsilonEff: params.Eeff,
+             freqHz: results[0].fn, // Should already be in Hz
+        });
        return { results, feedGap: Number(feedGap) };        // <── wrapped object now
     }
     
