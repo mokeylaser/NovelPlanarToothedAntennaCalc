@@ -186,9 +186,8 @@ export class AntennaVisualizer {
             
             const wedge = document.createElementNS(SVG_NS, 'path');
             wedge.setAttribute('d', wedgePath);
-            wedge.setAttribute('class', 'antenna-filled-wedge-section');
+            wedge.setAttribute('class', 'antenna-tooth-filled beta-section');
             wedge.setAttribute('data-section', 'beta');
-            wedge.setAttribute('fill', '#059669'); // green fill
             wedge.setAttribute('data-angle', `${params.alpha}°-90°`);
             antennaGroup.appendChild(wedge);
 
@@ -267,9 +266,8 @@ export class AntennaVisualizer {
             
             const el2 = document.createElementNS(SVG_NS, 'path');
             el2.setAttribute('d', mirrorWedgePath);
-            el2.setAttribute('class', 'antenna-filled-wedge-section-mirror');
+            el2.setAttribute('class', 'antenna-tooth-filled beta-section');
             el2.setAttribute('data-section', 'wedge-mirror');
-            el2.setAttribute('fill', '#059655'); // green fill
             el2.setAttribute('data-angle', `${180 + params.alpha}°-270°`);
             antennaGroup.appendChild(el2);
         }

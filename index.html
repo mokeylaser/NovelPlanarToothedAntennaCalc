@@ -24,7 +24,8 @@
     <div class="app-container">
         <header class="app-header">
             <h1>Novel Planar Toothed Antenna Calc</h1>
-            <p class="subtitle">Calculate resonant frequencies and visualize log-periodic planar antennas</p>
+            <p class="subtitle" >Calculate resonant frequencies and visualize log-periodic planar antennas</p>
+            <p class="subtitle" data-tippy-content= "Traditional calculations treat the teeth or arms of the antenna as half or quarter wave resonators. In contrast, this calculation is based on simulations which show the highest current density is along the edge of the slot between the teeth.The maximum current at resonance appears where the teeth meet the bowtie section, and drops off to near zero at the corners furthest from the bowtie.">(What makes it novel?)</p>
         </header>
 
         <main class="app-main">
@@ -129,8 +130,9 @@
                     <!-- Results Table -->
                     <div class="card hidden" id="results-card">
                         <h2>Calculation Results</h2>
+                         Note: The feed gap is calculated based on εeff, and sets the separation between the two antenna halves to achieve a nominal 50-Ohm launch.
                         <div id="results-container"></div>
-                        <div class="export-controls hidden">
+                    <div class="export-controls hidden">
                             <!-- <button id="export-dxf" class="export-btn" disabled>Export as DXF</button> -->
                             <button id="export-svg" class="export-btn">Export as SVG</button>
                         </div>
@@ -189,10 +191,7 @@
             </a>
             </footer>
     </div>
-
     <!-- JavaScript Modules -->
-   
-
 </script>
 </body>
 </html>
