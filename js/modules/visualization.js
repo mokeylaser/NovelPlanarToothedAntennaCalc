@@ -23,7 +23,8 @@ export class AntennaVisualizer {
     clearVisualization() {
         this.container.innerHTML = '';
     }
-
+    
+    // Create SVG element and set attributes
     createSVG() {
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.svg.setAttribute('class', 'antenna-svg');
@@ -129,10 +130,31 @@ export class AntennaVisualizer {
                 }
             }
         });
-
-                
-               /* ────────── Q2: solid β-section + feed gap ────────── */
+           
+                /* ────────── Q2: solid β-section + feed gap ────────── */
+        
         if (results.length > 0) {
+
+              /* ----- feed-gap indicator (tiny red bar at the apex) ----- */
+
+            if (feedGap && !isNaN(feedGap)) {
+                const gMeters   = Number(feedGap);          // metres
+                const gSvg      = gMeters * 1000 * scaleFactor; // convert → mm → SVG-units
+                const halfG     = 0.5 * gSvg;
+                const barHeight = params.r1 * 1000 * 0.02 * scaleFactor;
+                const gapAngle = params.alpha - 75; // angle at which the gap is drawn
+
+                const gapRect = document.createElementNS(SVG_NS, 'rect');
+                gapRect.setAttribute('x', (-halfG).toString());
+                gapRect.setAttribute('y', (-barHeight).toString());
+                gapRect.setAttribute('width', gSvg.toString());
+                gapRect.setAttribute('height', (barHeight * 2).toString());
+                gapRect.setAttribute('fill', '#ef4444');
+                gapRect.setAttribute('transform', `rotate(${gapAngle}, 0, 0)`);
+                gapRect.setAttribute('data-tippy-content',`Feed gap ≈ ${(gMeters * 1e3).toFixed(1)} mm`);
+                this.svg.appendChild(gapRect);
+            } // ← closes feed-gap IF
+           
             const innerRadius = results[0].rn * 1000 * scaleFactor; // smallest
             const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma); // largest
 
@@ -142,7 +164,8 @@ export class AntennaVisualizer {
                 outerRadius,
                 -Math.PI / 2 + betaStartRad,
                 -Math.PI / 2 + betaEndRad
-            );
+           );
+          
             const betaSection = document.createElementNS(SVG_NS, 'path');
             betaSection.setAttribute('d', betaPath);
             betaSection.setAttribute('class', 'antenna-tooth-filled beta-section');
@@ -150,22 +173,26 @@ export class AntennaVisualizer {
             betaSection.setAttribute('data-angle', `${params.alpha}°-90°`);
             antennaGroup.appendChild(betaSection);
 
-            /* ----- feed-gap indicator (tiny red bar at the apex) ----- */
-            if (feedGap && !isNaN(feedGap)) {
-                const gMeters   = Number(feedGap);          // metres
-                const gSvg      = gMeters * 1000 * scaleFactor; // convert → mm → SVG-units
-                const halfG     = 0.5 * gSvg;
-                const barHeight = params.r1 * 1000 * 0.02 * scaleFactor;
+            // Wedge section (filled triangular region)
+            const startX = 0;
+            const startY = 0;
+            const outerEndX = outerRadius * Math.cos(-Math.PI / 2 + betaEndRad);
+            const outerEndY = outerRadius * Math.sin(-Math.PI / 2 + betaEndRad);
+            const endX = outerRadius * Math.cos(-Math.PI / 2 + betaStartRad);
+            const endY = outerRadius * Math.sin(-Math.PI / 2 + betaStartRad);
+            //'M' = move to start point, 'L' = line to end point, 'A' = arc
+            // 'Z' = close path
+            const wedgePath = 'M ' + startX + ' ' + startY + ' L ' + endX + ' ' + endY + ' A ' + outerRadius + ' ' + outerRadius + ' 0 0 1 ' + outerEndX + ' ' + outerEndY + ' Z';
+            
+            const wedge = document.createElementNS(SVG_NS, 'path');
+            wedge.setAttribute('d', wedgePath);
+            wedge.setAttribute('class', 'antenna-filled-wedge-section');
+            wedge.setAttribute('data-section', 'beta');
+            wedge.setAttribute('fill', '#059669'); // green fill
+            wedge.setAttribute('data-angle', `${params.alpha}°-90°`);
+            antennaGroup.appendChild(wedge);
 
-                const gapRect = document.createElementNS(SVG_NS, 'rect');
-                gapRect.setAttribute('x', (-halfG).toString());
-                gapRect.setAttribute('y', (-barHeight).toString());
-                gapRect.setAttribute('width', gSvg.toString());
-                gapRect.setAttribute('height', (barHeight * 2).toString());
-                gapRect.setAttribute('fill', '#ef4444');
-                gapRect.setAttribute('data-tippy-content',`Feed gap ≈ ${(gMeters * 1e3).toFixed(1)} mm`);
-                this.svg.appendChild(gapRect);
-            } // ← closes feed-gap IF
+
         } // ← *** closes the big “if (results.length > 0)” block that was missing ***
 
 
@@ -226,6 +253,25 @@ export class AntennaVisualizer {
             el.setAttribute('data-section', 'beta-mirror');
             el.setAttribute('data-angle', `${180 + params.alpha}°-270°`);
             antennaGroup.appendChild(el);
+
+            // Wedge section (filled triangular region)
+            const startX = 0;
+            const startY = 0;
+            const outerEndX = outerRadius * Math.cos(Math.PI / 2 + betaEndRad);
+            const outerEndY = outerRadius * Math.sin(Math.PI / 2 + betaEndRad);
+            const endX = outerRadius * Math.cos(Math.PI / 2 + betaStartRad);
+            const endY = outerRadius * Math.sin(Math.PI / 2 + betaStartRad);
+            //'M' = move to start point, 'L' = line to end point, 'A' = arc
+            // 'Z' = close path
+            const mirrorWedgePath = 'M ' + startX + ' ' + startY + ' L ' + endX + ' ' + endY + ' A ' + outerRadius + ' ' + outerRadius + ' 0 0 1 ' + outerEndX + ' ' + outerEndY + ' Z';
+            
+            const el2 = document.createElementNS(SVG_NS, 'path');
+            el2.setAttribute('d', mirrorWedgePath);
+            el2.setAttribute('class', 'antenna-filled-wedge-section-mirror');
+            el2.setAttribute('data-section', 'wedge-mirror');
+            el2.setAttribute('fill', '#059655'); // green fill
+            el2.setAttribute('data-angle', `${180 + params.alpha}°-270°`);
+            antennaGroup.appendChild(el2);
         }
 
         
@@ -260,8 +306,8 @@ export class AntennaVisualizer {
         // Add angle labels
         this.addAngleLabels(group, outermostRadius, params.alpha);
     }
-
-    createToothPath(innerRadius, outerRadius, startAngle, endAngle) {
+        // Create paths for tooth segments
+        createToothPath(innerRadius, outerRadius, startAngle, endAngle) {
         // Create a path for a tooth segment
         const innerStart = MathHelpers.polarToCartesian(innerRadius, startAngle);
         const innerEnd = MathHelpers.polarToCartesian(innerRadius, endAngle);
