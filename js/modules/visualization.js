@@ -314,6 +314,44 @@ export class AntennaVisualizer {
         
         // Add angle labels
         this.addAngleLabels(group, outermostRadius, params.alpha, dynamic_font_size_mm);
+
+        // Prepare radii for labels
+        const radiiSource = [];
+        if (results.length > 0) {
+            radiiSource.push(results[0].rn); // First radius
+
+            if (results.length > 1) {
+                const outerMostVal = results[results.length - 1].rn * Math.sqrt(params.gamma);
+                if (outerMostVal !== results[0].rn) { // Avoid duplicate if only one result and gamma = 1
+                    radiiSource.push(outerMostVal);
+                }
+            }
+
+            if (results.length > 2) {
+                const midIndex1 = Math.floor(results.length / 3);
+                if (midIndex1 > 0 && midIndex1 < results.length -1) { // ensure index is not first or last
+                     radiiSource.push(results[midIndex1].rn);
+                }
+                const midIndex2 = Math.floor(2 * results.length / 3);
+                if (midIndex2 > 0 && midIndex2 < results.length -1 && midIndex2 !== midIndex1) { // ensure index is not first or last, and not same as midIndex1
+                    radiiSource.push(results[midIndex2].rn);
+                }
+            }
+        }
+
+        // Filter unique radii and map to the required format
+        const uniqueRadii = [...new Set(radiiSource)];
+        const radiiToLabel = uniqueRadii.map(r => ({
+            value: r,
+            scaledValue: r * 1000 * scaleFactor
+        })).sort((a,b) => a.value - b.value); // Sort by value for consistent labeling order
+
+        // Add radii labels
+        if (radiiToLabel.length > 0) {
+            const labelAngleRad = MathHelpers.degToRad(-10); // Angle for placing radius labels
+            const labelOffset = 20; // Offset from the radius point
+            this.addRadiiLabels(group, radiiToLabel, labelAngleRad, dynamic_font_size_mm, labelOffset);
+        }
     }
         // Create paths for tooth segments
         createToothPath(innerRadius, outerRadius, startAngle, endAngle) {
@@ -390,6 +428,21 @@ export class AntennaVisualizer {
         label180.setAttribute('font-size', dynamicFontSize.toString());
         label180.textContent = '180°';
         group.appendChild(label180);
+    }
+
+    addRadiiLabels(group, radiiToLabel, angleRad, dynamicFontSize, labelOffset) {
+        radiiToLabel.forEach(radius => {
+            const pos = MathHelpers.polarToCartesian(radius.scaledValue + labelOffset, angleRad);
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', pos.x.toString());
+            label.setAttribute('y', pos.y.toString());
+            label.setAttribute('class', 'dimension-text radius-label');
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('fill', '#007bff'); // Or a distinct color
+            label.setAttribute('font-size', dynamicFontSize.toString());
+            label.textContent = `${radius.value.toFixed(2)}m`;
+            group.appendChild(label);
+        });
     }
 
     createArc(cx, cy, r, startAngle, endAngle) {
