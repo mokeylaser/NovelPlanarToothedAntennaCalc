@@ -84,10 +84,21 @@ export class AntennaVisualizer {
         const antennaGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         antennaGroup.setAttribute('class', 'antenna-group');
         const SVG_NS = 'http://www.w3.org/2000/svg';
+
+        // Calculate actual_max_antenna_radius_meters
+        const base_rn_for_max_radius = params.gamma < 1 && results.length > 0 ? results[0].rn : (results.length > 0 ? results[results.length - 1].rn : 0);
+        const actual_max_antenna_radius_meters = base_rn_for_max_radius * Math.sqrt(params.gamma);
+
+        // Calculate dynamic_font_size_mm
+        let dynamic_font_size_mm = (0.05 * actual_max_antenna_radius_meters) * 1000;
+        if (isNaN(dynamic_font_size_mm) || dynamic_font_size_mm <= 0) {
+            dynamic_font_size_mm = 1; // Default to 1mm if calculation is not valid
+        }
+
         // Calculate scale factor to fit antenna in viewport
-        const maxRadius = results[results.length - 1].rn * 1000; // Convert to mm
+        const maxRadius = results.length > 0 ? results[results.length - 1].rn * 1000 : 0; // Convert to mm
         const outerRadiusMax = maxRadius * Math.sqrt(params.gamma);
-        const scaleFactor = 400 / outerRadiusMax; // Scale to fit in viewport
+        const scaleFactor = outerRadiusMax > 0 ? 400 / outerRadiusMax : 1; // Scale to fit in viewport, handle division by zero
         
         // Calculate angles
         const alphaRad = MathHelpers.degToRad(params.alpha);
@@ -275,14 +286,14 @@ export class AntennaVisualizer {
         
         // Draw reference lines (optional)
         const showReferenceLines = true;
-        if (showReferenceLines) {
-            this.drawReferenceLines(antennaGroup, results, scaleFactor, params);
+        if (showReferenceLines && results.length > 0) { // Ensure results is not empty
+            this.drawReferenceLines(antennaGroup, results, scaleFactor, params, dynamic_font_size_mm);
         }
         
         this.svg.appendChild(antennaGroup);
     }
     
-    drawReferenceLines(group, results, scaleFactor, params) {
+    drawReferenceLines(group, results, scaleFactor, params, dynamic_font_size_mm) {
         const outermostRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
         const alphaRad = MathHelpers.degToRad(params.alpha);
         
@@ -302,7 +313,7 @@ export class AntennaVisualizer {
         });
         
         // Add angle labels
-        this.addAngleLabels(group, outermostRadius, params.alpha);
+        this.addAngleLabels(group, outermostRadius, params.alpha, dynamic_font_size_mm);
     }
         // Create paths for tooth segments
         createToothPath(innerRadius, outerRadius, startAngle, endAngle) {
@@ -329,49 +340,54 @@ export class AntennaVisualizer {
         return path;
     }
 
-    addAngleLabels(group, radius, alpha) {
+    addAngleLabels(group, radius, alpha, dynamicFontSize) {
         const beta = 90 - alpha;
-        const labelOffset = 20;
+        const labelOffset = 20; // This offset might need adjustment based on font size or be dynamic
         
         // 0° label
         const zeroLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         zeroLabel.setAttribute('x', '0');
-        zeroLabel.setAttribute('y', -radius - labelOffset);
+        zeroLabel.setAttribute('y', (-radius - labelOffset).toString());
         zeroLabel.setAttribute('class', 'dimension-text');
         zeroLabel.setAttribute('text-anchor', 'middle');
         zeroLabel.setAttribute('fill', '#666');
+        zeroLabel.setAttribute('font-size', dynamicFontSize.toString());
         zeroLabel.textContent = '0°';
         group.appendChild(zeroLabel);
         
         // Alpha label
         const alphaPos = MathHelpers.polarToCartesian(radius + labelOffset, -Math.PI/2 + MathHelpers.degToRad(alpha));
         const alphaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        alphaLabel.setAttribute('x', alphaPos.x);
-        alphaLabel.setAttribute('y', alphaPos.y);
+        alphaLabel.setAttribute('x', alphaPos.x.toString());
+        alphaLabel.setAttribute('y', alphaPos.y.toString());
         alphaLabel.setAttribute('class', 'dimension-text');
         alphaLabel.setAttribute('text-anchor', 'middle');
         alphaLabel.setAttribute('fill', '#e11d48');
+        alphaLabel.setAttribute('font-size', dynamicFontSize.toString());
         alphaLabel.textContent = `α=${alpha}°`;
         group.appendChild(alphaLabel);
         
         // Beta label
-        const betaPos = MathHelpers.polarToCartesian(radius + labelOffset, 0);
+        const betaPos = MathHelpers.polarToCartesian(radius + labelOffset, 0); // Positioned along the x-axis
         const betaLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        betaLabel.setAttribute('x', betaPos.x);
-        betaLabel.setAttribute('y', betaPos.y);
+        betaLabel.setAttribute('x', betaPos.x.toString());
+        betaLabel.setAttribute('y', betaPos.y.toString());
         betaLabel.setAttribute('class', 'dimension-text');
-        betaLabel.setAttribute('text-anchor', 'middle');
+        betaLabel.setAttribute('text-anchor', 'middle'); // Center text at (radius + offset, 0)
+        betaLabel.setAttribute('dominant-baseline', 'middle'); // Vertically center for better alignment
         betaLabel.setAttribute('fill', '#059669');
+        betaLabel.setAttribute('font-size', dynamicFontSize.toString());
         betaLabel.textContent = `β=${beta}°`;
         group.appendChild(betaLabel);
         
         // 180° label
         const label180 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         label180.setAttribute('x', '0');
-        label180.setAttribute('y', radius + labelOffset + 10);
+        label180.setAttribute('y', (radius + labelOffset + dynamicFontSize).toString()); // Adjust y based on font size
         label180.setAttribute('class', 'dimension-text');
         label180.setAttribute('text-anchor', 'middle');
         label180.setAttribute('fill', '#666');
+        label180.setAttribute('font-size', dynamicFontSize.toString());
         label180.textContent = '180°';
         group.appendChild(label180);
     }
