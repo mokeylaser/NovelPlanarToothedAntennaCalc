@@ -108,7 +108,7 @@ circle.antenna-tooth:hover {
 
 .dimension-text {
     fill: var(--text-secondary);
-    font-size: 0.75rem;
+    /* font-size: 0.75rem; */ /* Font size is now set dynamically via JavaScript */
     font-family: var(--font-mono);
     text-anchor: middle;
     -webkit-user-select: none;
