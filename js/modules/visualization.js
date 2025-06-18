@@ -85,6 +85,17 @@ export class AntennaVisualizer {
         antennaGroup.setAttribute('class', 'antenna-group');
         const SVG_NS = 'http://www.w3.org/2000/svg';
 
+        // Calculate actual maximum antenna radius in millimeters
+        let actualOuterRadiusMm = 0;
+        if (results.length > 0) {
+            actualOuterRadiusMm = results[results.length - 1].rn * 1000 * Math.sqrt(params.gamma);
+        }
+        // Ensure a minimum radius if actualOuterRadiusMm is zero or very small, to prevent issues with viewBox
+        if (actualOuterRadiusMm === 0) {
+            actualOuterRadiusMm = 100; // Default to a 100mm radius area if antenna is not defined
+            console.warn("Antenna dimensions are zero, defaulting to a 100mm radius view.");
+        }
+
         // Calculate actual_max_antenna_radius_meters
         const base_rn_for_max_radius = params.gamma < 1 && results.length > 0 ? results[0].rn : (results.length > 0 ? results[results.length - 1].rn : 0);
         const actual_max_antenna_radius_meters = base_rn_for_max_radius * Math.sqrt(params.gamma);
@@ -98,7 +109,7 @@ export class AntennaVisualizer {
         // Calculate scale factor to fit antenna in viewport
         const maxRadius = results.length > 0 ? results[results.length - 1].rn * 1000 : 0; // Convert to mm
         const outerRadiusMax = maxRadius * Math.sqrt(params.gamma);
-        const scaleFactor = outerRadiusMax > 0 ? 400 / outerRadiusMax : 1; // Scale to fit in viewport, handle division by zero
+        // const scaleFactor = outerRadiusMax > 0 ? 400 / outerRadiusMax : 1; // Scale to fit in viewport, handle division by zero
         
         // Calculate angles
         const alphaRad = MathHelpers.degToRad(params.alpha);
@@ -111,8 +122,8 @@ export class AntennaVisualizer {
         // Draw alternating teeth in Q1 (0 to alpha degrees)
         results.forEach((result, index) => {
             if (index < results.length - 1) {
-                const currentRn = result.rn * 1000 * scaleFactor;
-                const nextRn = results[index + 1].rn * 1000 * scaleFactor;
+                const currentRn = result.rn * 1000;
+                const nextRn = results[index + 1].rn * 1000;
                 
                 // Q1: Even indices (0, 2, 4...) draw teeth from 0 to alpha
                 if (index % 2 === 0) {
@@ -150,9 +161,9 @@ export class AntennaVisualizer {
 
             if (feedGap && !isNaN(feedGap)) {
                 const gMeters   = Number(feedGap);          // metres
-                const gSvg      = gMeters * 1000 * scaleFactor; // convert → mm → SVG-units
+                const gSvg      = gMeters * 1000; // convert → mm → SVG-units
                 const halfG     = 0.5 * gSvg;
-                const barHeight = params.r1 * 1000 * 0.02 * scaleFactor;
+                const barHeight = params.r1 * 1000 * 0.02;
                 const gapAngle = params.alpha - 75; // angle at which the gap is drawn
 
                 const gapRect = document.createElementNS(SVG_NS, 'rect');
@@ -166,8 +177,8 @@ export class AntennaVisualizer {
                 this.svg.appendChild(gapRect);
             } // ← closes feed-gap IF
            
-            const innerRadius = results[0].rn * 1000 * scaleFactor; // smallest
-            const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma); // largest
+            const innerRadius = results[0].rn * 1000; // smallest
+            const outerRadius = results[results.length - 1].rn * 1000 * Math.sqrt(params.gamma); // largest
 
             // β-section (first half-plane)
             const betaPath = this.createToothPath(
@@ -209,8 +220,8 @@ export class AntennaVisualizer {
         /* ────────── Other half of dipole (180° rotated) ────────── */
         results.forEach((result, index) => {
             if (index < results.length - 1) {
-                const currentRn = result.rn * 1000 * scaleFactor;
-                const nextRn    = results[index + 1].rn * 1000 * scaleFactor;
+                const currentRn = result.rn * 1000;
+                const nextRn    = results[index + 1].rn * 1000;
 
                 // mirror Q1
                 if (index % 2 === 0) {
@@ -248,8 +259,8 @@ export class AntennaVisualizer {
 
         /* ────────── mirrored β-section (second half-plane) ────────── */
         if (results.length > 0) {
-            const innerRadius = results[0].rn * 1000 * scaleFactor;
-            const outerRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
+            const innerRadius = results[0].rn * 1000;
+            const outerRadius = results[results.length - 1].rn * 1000 * Math.sqrt(params.gamma);
 
             const p = this.createToothPath(
                 innerRadius,
@@ -287,14 +298,23 @@ export class AntennaVisualizer {
         // Draw reference lines (optional)
         const showReferenceLines = true;
         if (showReferenceLines && results.length > 0) { // Ensure results is not empty
-            this.drawReferenceLines(antennaGroup, results, scaleFactor, params, dynamic_font_size_mm);
+            this.drawReferenceLines(antennaGroup, results, params, dynamic_font_size_mm);
         }
         
         this.svg.appendChild(antennaGroup);
+
+        // Adjust zoom to fit the newly drawn antenna
+        if (typeof actualOuterRadiusMm !== 'undefined') {
+            this.zoomToFit(actualOuterRadiusMm);
+        } else {
+            // Fallback if actualOuterRadiusMm was not calculated, though previous steps should ensure it is.
+            console.error("actualOuterRadiusMm is not defined when attempting to zoomToFit in drawAntennaGeometry.");
+            this.zoomToFit(100); // Default to a 100mm radius view as a safe fallback
+        }
     }
     
-    drawReferenceLines(group, results, scaleFactor, params, dynamic_font_size_mm) {
-        const outermostRadius = results[results.length - 1].rn * 1000 * scaleFactor * Math.sqrt(params.gamma);
+    drawReferenceLines(group, results, params, dynamic_font_size_mm) {
+        const outermostRadius = results[results.length - 1].rn * 1000 * Math.sqrt(params.gamma);
         const alphaRad = MathHelpers.degToRad(params.alpha);
         
         // Draw main angle lines
@@ -343,7 +363,7 @@ export class AntennaVisualizer {
         const uniqueRadii = [...new Set(radiiSource)];
         const radiiToLabel = uniqueRadii.map(r => ({
             value: r,
-            scaledValue: r * 1000 * scaleFactor
+            scaledValue: r * 1000
         })).sort((a,b) => a.value - b.value); // Sort by value for consistent labeling order
 
         // Add radii labels
@@ -507,9 +527,62 @@ export class AntennaVisualizer {
     }
 
     resetZoom() {
-        this.scale = 1;
-        this.viewBox = { x: -500, y: -500, width: 1000, height: 1000 };
-        this.svg.setAttribute('viewBox', `${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.width} ${this.viewBox.height}`);
+        if (this.currentData && this.currentData.results && this.currentData.results.length > 0 && this.currentData.params) {
+            const results = this.currentData.results;
+            const params = this.currentData.params;
+            let actualOuterRadiusMm = results[results.length - 1].rn * 1000 * Math.sqrt(params.gamma);
+
+            if (actualOuterRadiusMm === 0) {
+                actualOuterRadiusMm = 100; // Default to a 100mm radius area
+                console.warn("Antenna dimensions for resetZoom are zero, defaulting to a 100mm radius view.");
+            }
+            this.zoomToFit(actualOuterRadiusMm);
+        } else {
+            // Fallback if there's no current antenna data, revert to a default generic view
+            console.warn("No current antenna data for resetZoom, reverting to default viewport.");
+            this.viewBox = { x: -500, y: -500, width: 1000, height: 1000 };
+            this.scale = 1;
+            if (this.svg) {
+                this.svg.setAttribute('viewBox', `${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.width} ${this.viewBox.height}`);
+            }
+        }
+    }
+
+    zoomToFit(antennaMaxRadiusMm) {
+        const paddingFactor = 1.1; // 10% padding
+        let viewWidth, viewHeight, viewX, viewY;
+
+        if (antennaMaxRadiusMm <= 0) {
+            // Fallback for zero or negative radius, similar to resetZoom's defaults but adjust as needed
+            console.warn("zoomToFit called with invalid antennaMaxRadiusMm. Using default viewport.");
+            viewX = -500;
+            viewY = -500;
+            viewWidth = 1000;
+            viewHeight = 1000;
+            this.scale = 1; // Reset scale
+        } else {
+            viewWidth = antennaMaxRadiusMm * 2 * paddingFactor;
+            viewHeight = antennaMaxRadiusMm * 2 * paddingFactor;
+            viewX = -antennaMaxRadiusMm * paddingFactor;
+            viewY = -antennaMaxRadiusMm * paddingFactor;
+            // Recalculate scale based on the new viewBox relative to a conceptual default or initial size.
+            // If a default viewport width is 1000 units, then scale is 1000 / new viewWidth.
+            // This keeps the this.scale property consistent with how zoom() might use it.
+            // Alternatively, if this.scale is purely for zoom multiplication factor,
+            // setting it to 1 here means "fitted" is the new baseline.
+            this.scale = 1;
+        }
+
+        this.viewBox = {
+            x: viewX,
+            y: viewY,
+            width: viewWidth,
+            height: viewHeight
+        };
+
+        if (this.svg) {
+            this.svg.setAttribute('viewBox', `${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.width} ${this.viewBox.height}`);
+        }
     }
 
     setupInteractions() {
