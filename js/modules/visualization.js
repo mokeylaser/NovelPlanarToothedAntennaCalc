@@ -101,14 +101,14 @@ export class AntennaVisualizer {
         const actual_max_antenna_radius_meters = base_rn_for_max_radius * Math.sqrt(params.gamma);
 
         // Calculate dynamic_font_size_mm
-        let dynamic_font_size_mm = (0.1 * actual_max_antenna_radius_meters) * 1000;
+        let dynamic_font_size_mm = (0.075 * actual_max_antenna_radius_meters) * 1000;
         if (isNaN(dynamic_font_size_mm) || dynamic_font_size_mm <= 0) {
             dynamic_font_size_mm = 1; // Default to 1mm if calculation is not valid
         }
 
         // Calculate scale factor to fit antenna in viewport
         const maxRadius = results.length > 0 ? results[results.length - 1].rn * 1000 : 0; // Convert to mm
-        const outerRadiusMax = maxRadius * Math.sqrt(params.gamma);
+        // const outerRadiusMax = maxRadius * Math.sqrt(params.gamma);
         // const scaleFactor = outerRadiusMax > 0 ? 400 / outerRadiusMax : 1; // Scale to fit in viewport, handle division by zero
         
         // Calculate angles

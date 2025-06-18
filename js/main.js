@@ -189,8 +189,8 @@ class AntennaCalcApp {
                     </tr>
                     <tr>
                         <th>Tooth Pair (n)</th>
-                        <th>Inner Radius (rₙ) [m]</th>
-                        <th>Inner Radius (rₙ) [inches]</th>
+                        <th>Radius (rₙ) [m]</th>
+                        <th>Radius (rₙ) [inches]</th>
                         <th>Frequency (fₙ) [${params.outputUnit}]</th>
                     </tr>
                 </thead>
