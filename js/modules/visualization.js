@@ -101,7 +101,7 @@ export class AntennaVisualizer {
         const actual_max_antenna_radius_meters = base_rn_for_max_radius * Math.sqrt(params.gamma);
 
         // Calculate dynamic_font_size_mm
-        let dynamic_font_size_mm = (0.25 * actual_max_antenna_radius_meters) * 1000;
+        let dynamic_font_size_mm = (0.1 * actual_max_antenna_radius_meters) * 1000;
         if (isNaN(dynamic_font_size_mm) || dynamic_font_size_mm <= 0) {
             dynamic_font_size_mm = 1; // Default to 1mm if calculation is not valid
         }
