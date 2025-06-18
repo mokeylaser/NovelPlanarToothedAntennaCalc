@@ -1,5 +1,6 @@
 // Antenna Visualization Module
 import { MathHelpers, CONSTANTS } from '../utils/mathHelpers.js';
+import { AntennaGeometry } from './antennaGeometry.js';
 
 export class AntennaVisualizer {
     constructor() {
@@ -703,10 +704,45 @@ export class AntennaVisualizer {
     
     // Export SVG as downloadable file
     exportSVG(filename = 'antenna_design.svg') {
-        if (!this.svg) return;
+        if (!this.svg || !this.currentData) {
+            console.error('SVG or currentData not available for export.');
+            return;
+        }
+
+        const antennaGeometry = new AntennaGeometry();
+        const geometryData = antennaGeometry.generateCompleteGeometry(this.currentData.results, this.currentData.params);
+        const bounds = geometryData.bounds;
+
+        if (!bounds || bounds.width === 0 || bounds.height === 0) {
+            console.error('Invalid bounds for SVG export. Falling back to default export.');
+            // Fallback to old behavior or simply return
+            // For now, let's try to export with the existing viewBox if bounds are invalid
+            const svgCloneOriginal = this.svg.cloneNode(true);
+            const svgStringOriginal = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgCloneOriginal.outerHTML;
+            const blobOriginal = new Blob([svgStringOriginal], { type: 'image/svg+xml' });
+            const urlOriginal = URL.createObjectURL(blobOriginal);
+            const aOriginal = document.createElement('a');
+            aOriginal.href = urlOriginal;
+            aOriginal.download = filename;
+            aOriginal.click();
+            URL.revokeObjectURL(urlOriginal);
+            return;
+        }
         
         // Clone the SVG to avoid modifying the original
         const svgClone = this.svg.cloneNode(true);
+
+        // Calculate padding and new viewBox
+        const paddingWidth = bounds.width * 0.1;
+        const paddingHeight = bounds.height * 0.1;
+
+        const newX = bounds.min.x - paddingWidth / 2;
+        const newY = bounds.min.y - paddingHeight / 2;
+        const newWidth = bounds.width + paddingWidth;
+        const newHeight = bounds.height + paddingHeight;
+
+        const newViewBox = `${newX} ${newY} ${newWidth} ${newHeight}`;
+        svgClone.setAttribute('viewBox', newViewBox);
         
         // Add XML declaration and namespace
         const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgClone.outerHTML;
