@@ -1,6 +1,7 @@
 // Antenna Visualization Module
 import { MathHelpers, CONSTANTS } from '../utils/mathHelpers.js';
 import { AntennaGeometry } from './antennaGeometry.js';
+import { booleanUnionSVG } from '../utils/svgBooleanUnion.js';
 
 export class AntennaVisualizer {
     constructor() {
@@ -733,17 +734,20 @@ export class AntennaVisualizer {
         const svgClone = this.svg.cloneNode(true);
 
         // Calculate padding and new viewBox
-        const paddingWidth = bounds.width * 0.1;
-        const paddingHeight = bounds.height * 0.1;
+        //const paddingWidth = bounds.width * 0.1;
+        //const paddingHeight = bounds.height * 0.1;
+        svgClone.setAttribute('width', `${bounds.width.toFixed(2)}mm`);
+        svgClone.setAttribute('height', `${bounds.height.toFixed(2)}mm`);
 
-        const newX = bounds.min.x - paddingWidth / 2;
-        const newY = bounds.min.y - paddingHeight / 2;
-        const newWidth = bounds.width + paddingWidth;
-        const newHeight = bounds.height + paddingHeight;
+        const newX = bounds.min.x; //- paddingWidth / 2;
+        const newY = bounds.min.y; // - paddingHeight / 2;
+        const newWidth = bounds.width; // + paddingWidth;
+        const newHeight = bounds.height; // + paddingHeight;
 
         const newViewBox = `${newX} ${newY} ${newWidth} ${newHeight}`;
         svgClone.setAttribute('viewBox', newViewBox);
         
+    booleanUnionSVG(svgClone); // Ensure the SVG is unioned if necessary
         // Add XML declaration and namespace
         const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgClone.outerHTML;
         
