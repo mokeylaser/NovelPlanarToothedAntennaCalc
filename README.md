@@ -10,7 +10,7 @@ Traditional calculators treat the "teeth" of the antenna as half or quarter-wave
 using those radii to approximate the length of the antenna element. 
 
 This calculator is "novel" in the sense that it bases the resonant frequency on the length of the edge of the gap or "anti-tooth". In simulations of 
-a planar toothed antenna using something like CST Studio (which I do have), one can see that the current at resonance is concentrated at the points
+a planar toothed antenna using something like CST Studio, one can see that the current at resonance is concentrated at the points
 where the teeth meet the bowtie section, as shown in the paper referenced above. 
 
 
