@@ -3,7 +3,7 @@ import makerjs from 'makerjs';
 function booleanUnionSVG(svgClone) {
   // 1️⃣ collect the geometry you want to weld
   const pathEls = [...svgClone.querySelectorAll(
-    '.antenna-tooth, .beta-section, .wedge'   // tweak selectors as needed
+    '.antenna-tooth-filled'   // tweak selectors as needed
   )];
 
   if (pathEls.length === 0) return;  // nothing to do

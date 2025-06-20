@@ -1,7 +1,7 @@
 // Antenna Visualization Module
 import { MathHelpers, CONSTANTS } from '../utils/mathHelpers.js';
 import { AntennaGeometry } from './antennaGeometry.js';
-//import { booleanUnionSVG } from '../utils/svgBooleanUnion.js';
+import { booleanUnionSVG } from '../utils/svgBooleanUnion.js';
 
 export class AntennaVisualizer {
     constructor() {
@@ -85,6 +85,7 @@ export class AntennaVisualizer {
     drawAntennaGeometry(results, params, feedGap) {
         const antennaGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         antennaGroup.setAttribute('class', 'antenna-group');
+        antennaGroup.setAttribute('id', 'antenna-group');
         const SVG_NS = 'http://www.w3.org/2000/svg';
 
         // Calculate actual maximum antenna radius in millimeters
@@ -747,7 +748,7 @@ export class AntennaVisualizer {
         const newViewBox = `${newX} ${newY} ${newWidth} ${newHeight}`;
         svgClone.setAttribute('viewBox', newViewBox);
         
-        // booleanUnionSVG(svgClone); // Ensure the SVG is unioned if necessary
+        booleanUnionSVG(svgClone); // Ensure the SVG is unioned if necessary
         // Add XML declaration and namespace
         const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgClone.outerHTML;
         
