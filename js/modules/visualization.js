@@ -747,7 +747,7 @@ export class AntennaVisualizer {
         const newViewBox = `${newX} ${newY} ${newWidth} ${newHeight}`;
         svgClone.setAttribute('viewBox', newViewBox);
         
-    // booleanUnionSVG(svgClone); // Ensure the SVG is unioned if necessary
+        // booleanUnionSVG(svgClone); // Ensure the SVG is unioned if necessary
         // Add XML declaration and namespace
         const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgClone.outerHTML;
         

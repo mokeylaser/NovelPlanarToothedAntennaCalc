@@ -2,7 +2,7 @@ console.log('[main.js] loaded at', new Date());
 // Main Application Module
 import { AntennaCalculator } from './modules/calculator.js';
 import { AntennaVisualizer } from './modules/visualization.js';
-import { AntennaGeometry } from './modules/antennaGeometry.js'; // Added for testing
+// import { AntennaGeometry } from './modules/antennaGeometry.js'; // Added for testing
 // import { DXFExporter } from './modules/dxfExporter.js';
   
 
