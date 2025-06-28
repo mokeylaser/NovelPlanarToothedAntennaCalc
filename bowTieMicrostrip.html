@@ -3,474 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>Bowtie Antenna Calculator</title>
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+    <!-- Tippy.js for tooltips -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components/calculator.css">
+    <!-- <link rel="stylesheet" href="css/components/visualization.css"> -->
+    <!-- <link rel="stylesheet" href="css/components/controls.css"> -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            min-height: 600px;
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .section {
-            padding: 40px;
-            border-right: 1px solid #e0e0e0;
-        }
-        
-        .section:last-child {
-            border-right: none;
-        }
-        
-        .section h2 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 1.8em;
-            position: relative;
-            padding-bottom: 10px;
-        }
-        
-        .section h2::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-            border-radius: 2px;
-        }
-        
-        .input-group {
-            margin-bottom: 25px;
-        }
-        
-        .input-group label {
-            display: block;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 8px;
-            font-size: 0.95em;
-        }
-        
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: #4ECDC4;
-            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
-        }
-        
-        .unit {
-            font-size: 0.85em;
-            color: #777;
-            margin-left: 5px;
-        }
-        
-        .button {
-            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 20px;
-        }
-        
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-        
-        .results {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 30px;
-            border-left: 5px solid #4ECDC4;
-        }
-        
-        .results h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.4em;
-        }
-        
-        .result-item {
+        /* Additional styles specific to bowtie calculator if needed */
+        .tab-buttons {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: var(--spacing-lg);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xs);
         }
-        
-        .result-item:last-child {
-            border-bottom: none;
-        }
-        
-        .result-label {
-            font-weight: 600;
-            color: #555;
-        }
-        
-        .result-value {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            color: #2c3e50;
-            background: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        
-        .note {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #856404;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 30px;
-            background: #f0f0f0;
-            border-radius: 10px;
-            padding: 5px;
-        }
-        
-        .tab {
+
+        .tab-button {
             flex: 1;
-            padding: 12px 20px;
+            padding: var(--spacing-md) var(--spacing-lg);
             text-align: center;
             background: transparent;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s ease;
-            color: #666;
+            transition: all var(--transition-base);
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
         }
-        
-        .tab.active {
-            background: white;
-            color: #333;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        .tab-button.active {
+            background: var(--bg-primary);
+            color: var(--primary-color);
+            box-shadow: var(--shadow-md);
         }
-        
+
         .tab-content {
             display: none;
         }
-        
+
         .tab-content.active {
             display: block;
+            animation: fadeIn var(--transition-slow) ease-out;
+        }
+        .results-card .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+        .results-card .result-item:last-child {
+            border-bottom: none;
+        }
+        .results-card .result-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .results-card .result-value {
+            font-family: var(--font-mono);
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+        }
+        .note-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%);
+            border-left: 4px solid var(--warning-color);
+        }
+        .note-card p {
+            color: var(--text-secondary); /* Or a more specific warning text color */
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+        .note-card strong {
+            color: var(--text-primary); /* Or a more specific warning text color */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎯 Bowtie Antenna Calculator</h1>
-            <p>Design and analyze bowtie printed antennas with precision</p>
-        </div>
-        
-        <div class="main-content">
-            <div class="section">
-                <h2>Design Parameters</h2>
-                
-                <div class="tabs">
-                    <button class="tab active" onclick="switchTab('forward')">Parameters → Frequency</button>
-                    <button class="tab" onclick="switchTab('reverse')">Frequency → Parameters</button>
-                </div>
-                
-                <div id="forward-tab" class="tab-content active">
-                    <div class="input-group">
-                        <label>Substrate Relative Permittivity (εᵣ)</label>
-                        <input type="number" id="eps_r" value="4.4" step="0.1" min="1">
-                        <span class="unit">dimensionless</span>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Bowtie Antenna Calculator</h1>
+            <p class="subtitle">Design and analyze bowtie printed antennas with precision</p>
+            <p class="subtitle">Calculator by KC3VJA</p>
+        </header>
+
+        <main class="app-main">
+            <div class="content-grid">
+                <!-- Calculator Section -->
+                <section class="calculator-section">
+                    <div class="card">
+                        <h2>Design Parameters</h2>
+                        <div class="tab-buttons">
+                            <button class="tab-button active" onclick="switchTab('forward', this)">Parameters → Frequency</button>
+                            <button class="tab-button" onclick="switchTab('reverse', this)">Frequency → Parameters</button>
+                        </div>
+
+                        <form id="calculator-form-forward" class="tab-content active">
+                            <div class="form-group">
+                                <label for="eps_r" data-tippy-content="Relative permittivity of the substrate material (e.g., FR4 is typically around 4.4).">Substrate Relative Permittivity (εᵣ)</label>
+                                <input type="number" id="eps_r" value="4.4" step="0.1" min="1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="h" data-tippy-content="Thickness of the substrate material.">Substrate Thickness (h) [mm]</label>
+                                <input type="number" id="h" value="1.6" step="0.1" min="0.1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="W" data-tippy-content="Width of the bowtie arm at its widest point (outer edge).">Mouth Width at Outer Edge (W) [mm]</label>
+                                <input type="number" id="W" value="18" step="0.1" min="0.1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="Wc" data-tippy-content="Width of the feed gap where the signal is introduced.">Width at Feed Gap (Wc) [mm]</label>
+                                <input type="number" id="Wc" value="3" step="0.1" min="0.1" required>
+                                 <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="L" data-tippy-content="Length of one triangular wing of the bowtie, from the feed point to the outer edge along the centerline.">Half-Height of Triangular Wing (L) [mm]</label>
+                                <input type="number" id="L" value="25" step="0.1" min="0.1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="S" data-tippy-content="Length of the slanted edge of the bowtie arm.">Slanted-Edge Length (S) [mm]</label>
+                                <input type="number" id="S" value="20" step="0.1" min="0.1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <button type="button" class="calculate-btn" onclick="calculateForward()">Calculate Frequency</button>
+                        </form>
+
+                        <form id="calculator-form-reverse" class="tab-content">
+                            <div class="form-group">
+                                <label for="target_freq" data-tippy-content="The desired center resonant frequency for the antenna design.">Target Center Frequency [GHz]</label>
+                                <input type="number" id="target_freq" value="2.4" step="0.1" min="0.1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="eps_r_rev" data-tippy-content="Relative permittivity of the substrate material.">Substrate Relative Permittivity (εᵣ)</label>
+                                <input type="number" id="eps_r_rev" value="4.4" step="0.1" min="1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="h_rev" data-tippy-content="Thickness of the substrate material.">Substrate Thickness (h) [mm]</label>
+                                <input type="number" id="h_rev" value="1.6" step="0.1" min="0.1" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="k_factor" data-tippy-content="Phase difference factor, typically between 0.3 and 0.6. Affects quality factor (Q).">K Factor (Phase Difference)</label>
+                                <input type="number" id="k_factor" value="0.4" step="0.01" min="0.3" max="0.6" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="flare_angle" data-tippy-content="The total angle of the bowtie flare, typically between 30° and 120°.">Flare Angle [degrees]</label>
+                                <input type="number" id="flare_angle" value="90" step="1" min="30" max="120" required>
+                                <span class="error-message"></span>
+                            </div>
+                            <button type="button" class="calculate-btn" onclick="calculateReverse()">Calculate Parameters</button>
+                        </form>
                     </div>
-                    
-                    <div class="input-group">
-                        <label>Substrate Thickness (h)</label>
-                        <input type="number" id="h" value="1.6" step="0.1" min="0.1">
-                        <span class="unit">mm</span>
+                </section>
+
+                <!-- Results Section -->
+                <section class="results-section">
+                    <div class="card results-card" id="results-card-bow">
+                        <h2>Calculation Results</h2>
+                        <div id="results-container-bow">
+                            <p class="placeholder-text" style="text-align: center; padding: 40px 0;">Enter parameters and click calculate to see results</p>
+                        </div>
                     </div>
-                    
-                    <div class="input-group">
-                        <label>Mouth Width at Outer Edge (W)</label>
-                        <input type="number" id="W" value="18" step="0.1" min="0.1">
-                        <span class="unit">mm</span>
+                    <div class="card note-card">
+                         <p><strong>Note:</strong> These calculations provide first-order estimates. Fine-tuning in an EM solver (HFSS, CST, Sonnet, etc.) is recommended for optimal performance.</p>
                     </div>
-                    
-                    <div class="input-group">
-                        <label>Width at Feed Gap (Wc)</label>
-                        <input type="number" id="Wc" value="3" step="0.1" min="0.1">
-                        <span class="unit">mm</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Half-Height of Triangular Wing (L)</label>
-                        <input type="number" id="L" value="25" step="0.1" min="0.1">
-                        <span class="unit">mm</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Slanted-Edge Length (S)</label>
-                        <input type="number" id="S" value="20" step="0.1" min="0.1">
-                        <span class="unit">mm</span>
-                    </div>
-                    
-                    <button class="button" onclick="calculateForward()">Calculate Frequency</button>
-                </div>
-                
-                <div id="reverse-tab" class="tab-content">
-                    <div class="input-group">
-                        <label>Target Center Frequency</label>
-                        <input type="number" id="target_freq" value="2.4" step="0.1" min="0.1">
-                        <span class="unit">GHz</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Substrate Relative Permittivity (εᵣ)</label>
-                        <input type="number" id="eps_r_rev" value="4.4" step="0.1" min="1">
-                        <span class="unit">dimensionless</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Substrate Thickness (h)</label>
-                        <input type="number" id="h_rev" value="1.6" step="0.1" min="0.1">
-                        <span class="unit">mm</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>K Factor (Phase Difference)</label>
-                        <input type="number" id="k_factor" value="0.4" step="0.1" min="0.3" max="0.6">
-                        <span class="unit">0.3 - 0.6</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Flare Angle</label>
-                        <input type="number" id="flare_angle" value="90" step="5" min="30" max="120">
-                        <span class="unit">degrees</span>
-                    </div>
-                    
-                    <button class="button" onclick="calculateReverse()">Calculate Parameters</button>
-                </div>
+                </section>
             </div>
-            
-            <div class="section">
-                <h2>Results</h2>
-                <div id="results" class="results">
-                    <h3>📊 Calculated Values</h3>
-                    <p style="color: #666; text-align: center; padding: 40px 0;">Enter parameters and click calculate to see results</p>
-                </div>
-                
-                <div class="note">
-                    <strong>Note:</strong> These calculations provide first-order estimates. Fine-tuning in an EM solver (HFSS, CST, Sonnet, etc.) is recommended for optimal performance.
-                </div>
-            </div>
-        </div>
+        </main>
+
+        <footer class="app-footer">
+            © 2025 Mark Richards
+            <p class="app-footer-text">
+                Bowtie formula based on general microstrip antenna design principles.
+            </p>
+             <a href="index.html" class="reference-link" style="display: block; margin-top: 10px;">Back to Toothed Antenna Calculator</a>
+        </footer>
     </div>
 
     <script>
         const C0 = 299792458; // speed of light (m/s)
 
-        // Core antenna equations from the document
         function epsEff(eps_r, h, W, Wc) {
+            // Ensure h, W, Wc are in meters for this formula if they are not already
             return 0.5 * (eps_r + 1) + 0.5 * (eps_r - 1) * Math.pow(1 + 24 * h / (W + Wc), -0.5);
         }
 
-        function deltaL(h, eps_eff, W, Wc) {
-            const k = (W + Wc) / (2 * h);
-            return (0.412 * h * (eps_eff + 0.3) * (k + 0.262)) / ((eps_eff - 0.258) * (k + 0.813));
+        function deltaL(h, eps_eff_val, W, Wc) {
+            // Ensure h, W, Wc are in meters
+            const k_val = (W + Wc) / (2 * h); // Corrected variable name from k to k_val
+            return (0.412 * h * (eps_eff_val + 0.3) * (k_val + 0.262)) / ((eps_eff_val - 0.258) * (k_val + 0.813));
         }
 
-        function resonanceFreq(L, W, Wc, S, h, eps_r) {
-            const eps_eff = epsEff(eps_r, h, W, Wc);
-            const dL = deltaL(h, eps_eff, W, Wc);
-            const num = (W + 2 * dL) + (Wc + 2 * dL);
-            const den = (W + 2 * dL) * (S + 2 * dL);
-            return (1.152 * C0 * num) / (2 * L * den * Math.sqrt(eps_eff));
+        function resonanceFreq(L_param, W_param, Wc_param, S_param, h_param, eps_r_param) {
+            // Parameters L, W, Wc, S, h should be in meters
+            const eps_eff_val = epsEff(eps_r_param, h_param, W_param, Wc_param);
+            const dL_val = deltaL(h_param, eps_eff_val, W_param, Wc_param); // Corrected variable name
+            const num = (W_param + 2 * dL_val) + (Wc_param + 2 * dL_val);
+            const den = (W_param + 2 * dL_val) * (S_param + 2 * dL_val);
+             // Original formula had L in denominator, which might be a typo or specific context.
+             // A more common approach for bowtie might relate L to wavelength directly.
+             // The provided formula: (1.152 * C0 * num) / (2 * L_param * den * Math.sqrt(eps_eff_val))
+             // This seems unusual. Let's assume it's from a specific paper.
+             // If L_param is intended to be the resonant length, it might be related to lambda_g / 2.
+             // The formula seems to be solving for frequency given L.
+            return (1.152 * C0 * num) / (2 * L_param * den * Math.sqrt(eps_eff_val));
         }
 
-        // Additional design equations
-        function calculateQuality(k, angle_deg) {
+        function calculateQuality(k_factor_param, angle_deg) { // Corrected variable name
             const angle_rad = angle_deg * Math.PI / 180;
-            return 1 / (k * Math.tan(angle_rad / 2));
+            return 1 / (k_factor_param * Math.tan(angle_rad / 2));
         }
 
-        function calculateBandwidth(frequency, Q) {
-            return frequency / Q;
+        function calculateBandwidth(frequency, Q_val) { // Corrected variable name
+            return frequency / Q_val;
         }
 
         function calculateWavelength(frequency) {
             return C0 / frequency;
         }
 
-        function calculateImpedance(L, G) {
-            return 60 * Math.log(2 * L / G);
+        function calculateImpedance(L_param, G_param) { // G is gap, ensure units are consistent
+            return 60 * Math.log(2 * L_param / G_param); // This is a simplified formula, often for dipoles.
+                                                  // For microstrip bowties, it can be more complex.
         }
 
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
             
-            // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabName + '-tab').classList.add('active');
+            if (tabName === 'forward') {
+                document.getElementById('calculator-form-forward').classList.add('active');
+            } else {
+                document.getElementById('calculator-form-reverse').classList.add('active');
+            }
         }
+
+        function validateAndGet(id, unitConversion = 1) {
+            const inputElement = document.getElementById(id);
+            const value = parseFloat(inputElement.value);
+            const errorElement = inputElement.nextElementSibling; // Assuming error span is next sibling
+
+            if (isNaN(value) || value <= 0 && inputElement.min !== undefined && parseFloat(inputElement.min) <= 0) {
+                 if (inputElement.min !== undefined && parseFloat(inputElement.min) > 0 && value <=0) {
+                    errorElement.textContent = `Value must be greater than ${inputElement.min}.`;
+                    throw new Error(`Validation failed for ${id}`);
+                 } else if (isNaN(value)) {
+                    errorElement.textContent = 'Please enter a valid number.';
+                    throw new Error(`Validation failed for ${id}`);
+                 }
+            }
+            errorElement.textContent = ''; // Clear error
+            return value * unitConversion;
+        }
+
 
         function calculateForward() {
             try {
-                // Get input values (convert mm to m)
-                const eps_r = parseFloat(document.getElementById('eps_r').value);
-                const h = parseFloat(document.getElementById('h').value) / 1000;
-                const W = parseFloat(document.getElementById('W').value) / 1000;
-                const Wc = parseFloat(document.getElementById('Wc').value) / 1000;
-                const L = parseFloat(document.getElementById('L').value) / 1000;
-                const S = parseFloat(document.getElementById('S').value) / 1000;
+                clearResults();
+                const eps_r = validateAndGet('eps_r');
+                const h = validateAndGet('h', 0.001); // mm to m
+                const W = validateAndGet('W', 0.001); // mm to m
+                const Wc = validateAndGet('Wc', 0.001); // mm to m
+                const L = validateAndGet('L', 0.001); // mm to m
+                const S = validateAndGet('S', 0.001); // mm to m
 
-                // Calculate primary values
                 const freq = resonanceFreq(L, W, Wc, S, h, eps_r);
-                const eps_eff = epsEff(eps_r, h, W, Wc);
-                const dL = deltaL(h, eps_eff, W, Wc);
-                const wavelength = calculateWavelength(freq);
+                if (isNaN(freq) || !isFinite(freq)) {
+                    displayError('Calculation resulted in an invalid frequency. Please check input parameters, especially S, W, Wc relative to L.');
+                    return;
+                }
+                const eps_eff_val = epsEff(eps_r, h, W, Wc);
+                const dL_val = deltaL(h, eps_eff_val, W, Wc);
+                const wavelength_val = calculateWavelength(freq); // Corrected variable name
                 
-                // Calculate additional parameters
-                const gap = wavelength * 0.01; // 1% of wavelength
-                const impedance = calculateImpedance(L, gap);
-                const Q = calculateQuality(0.4, 90); // Default values
-                const bandwidth = calculateBandwidth(freq, Q);
+                const estimated_gap_for_impedance = Wc; // Using Wc as the gap for impedance calculation
+                const impedance = calculateImpedance(L, estimated_gap_for_impedance);
+                // Assuming a default flare angle of 90 for Q if not specified otherwise for forward calc
+                const Q_val = calculateQuality(0.4, 90);
+                const bandwidth = calculateBandwidth(freq, Q_val);
 
-                // Display results
                 displayResults([
                     { label: 'Resonance Frequency', value: (freq / 1e9).toFixed(3) + ' GHz' },
-                    { label: 'Effective Permittivity (εₑff)', value: eps_eff.toFixed(3) },
-                    { label: 'Fringing Extension (ΔL)', value: (dL * 1000).toFixed(3) + ' mm' },
-                    { label: 'Wavelength', value: (wavelength * 1000).toFixed(1) + ' mm' },
-                    { label: 'Estimated Gap', value: (gap * 1000).toFixed(2) + ' mm' },
-                    { label: 'Input Impedance', value: impedance.toFixed(1) + ' Ω' },
-                    { label: 'Quality Factor (Q)', value: Q.toFixed(1) },
-                    { label: 'Bandwidth (-3dB)', value: (bandwidth / 1e6).toFixed(0) + ' MHz' }
-                ]);
+                    { label: 'Effective Permittivity (ε<sub>eff</sub>)', value: eps_eff_val.toFixed(3) },
+                    { label: 'Fringing Extension (ΔL)', value: (dL_val * 1000).toFixed(3) + ' mm' },
+                    { label: 'Wavelength (λ)', value: (wavelength_val * 1000).toFixed(1) + ' mm' },
+                    { label: 'Input Impedance (Z<sub>in</sub>)', value: impedance.toFixed(1) + ' Ω' },
+                    { label: 'Quality Factor (Q)', value: Q_val.toFixed(1) },
+                    { label: 'Bandwidth (-3dB)', value: (bandwidth / 1e6).toFixed(1) + ' MHz' }
+                ], 'results-container-bow');
             } catch (error) {
-                displayError('Please check your input values and try again.');
+                // Error already displayed by validateAndGet or explicitly by displayError
+                console.error("Calculation Error:", error);
             }
         }
 
         function calculateReverse() {
             try {
-                // Get input values
-                const target_freq = parseFloat(document.getElementById('target_freq').value) * 1e9;
-                const eps_r = parseFloat(document.getElementById('eps_r_rev').value);
-                const h = parseFloat(document.getElementById('h_rev').value) / 1000;
-                const k = parseFloat(document.getElementById('k_factor').value);
-                const flare_angle = parseFloat(document.getElementById('flare_angle').value);
+                clearResults();
+                const target_freq = validateAndGet('target_freq', 1e9); // GHz to Hz
+                const eps_r_rev = validateAndGet('eps_r_rev');
+                const h_rev = validateAndGet('h_rev', 0.001); // mm to m
+                const k_factor = validateAndGet('k_factor');
+                const flare_angle = validateAndGet('flare_angle');
 
-                // Calculate wavelength and basic dimensions
-                const wavelength = calculateWavelength(target_freq);
-                const quarter_wave = wavelength / 4;
+                const wavelength_val = calculateWavelength(target_freq);
                 
-                // Calculate antenna dimensions based on formulas provided
-                const L = quarter_wave; // Length for each side
-                const vertical_height = L * Math.cos((flare_angle / 2) * Math.PI / 180);
-                const flare_width = 2 * L * Math.sin((flare_angle / 2) * Math.PI / 180);
-                const gap = wavelength * 0.01; // 1% of wavelength
+                // Simplified design: L is often related to lambda_eff / 2 for resonance.
+                // For a bowtie, each arm is roughly lambda_eff / 4.
+                // This requires iterative solution or more complex formulas not provided.
+                // Using a common approximation: L_arm ~ lambda_0 / (2 * sqrt(eps_eff_avg))
+                // Let's use a simplified L based on quarter wavelength in free space as a starting point,
+                // then acknowledge it's an approximation.
+                // A more direct approach from target frequency to dimensions often involves specific design curves or iterative solver.
+                // The formulas provided don't directly give L, W, S, Wc from frequency.
+                // We can estimate L based on quarter-wave and then derive others.
                 
-                // Estimate other parameters
-                const W = flare_width;
-                const Wc = gap;
-                const S = L * 0.8; // Approximation
+                // Estimate initial L (e.g. quarter of effective wavelength)
+                // This is a rough estimate as eps_eff depends on W, Wc which are unknown.
+                // Let's assume an initial eps_eff close to eps_r for a rough L.
+                const L_estimated = wavelength_val / (4 * Math.sqrt((eps_r_rev + 1) / 2)); // Very rough estimate for one arm length
                 
-                // Calculate performance metrics
-                const Q = calculateQuality(k, flare_angle);
-                const bandwidth = calculateBandwidth(target_freq, Q);
-                const impedance = calculateImpedance(L, gap);
-                const eps_eff = epsEff(eps_r, h, W, Wc);
+                const L_final_mm = (L_estimated * 1000).toFixed(1); // Placeholder
+                const W_final_mm = (2 * L_estimated * Math.tan(flare_angle * Math.PI / 360) * 1000).toFixed(1); // Width based on L and flare angle
+                const S_final_mm = (L_estimated / Math.cos(flare_angle * Math.PI / 360) * 1000).toFixed(1); // Slant length
+                const Wc_final_mm = (W_final_mm * 0.1).toFixed(2); // Feed gap as 10% of W, placeholder
 
-                // Display results
+                // Recalculate eps_eff with these estimated dimensions for consistency
+                const eps_eff_final = epsEff(eps_r_rev, h_rev, parseFloat(W_final_mm)/1000, parseFloat(Wc_final_mm)/1000);
+
+                const Q_val = calculateQuality(k_factor, flare_angle);
+                const bandwidth = calculateBandwidth(target_freq, Q_val);
+                const impedance = calculateImpedance(L_estimated, parseFloat(Wc_final_mm)/1000);
+
+
                 displayResults([
-                    { label: 'Wavelength', value: (wavelength * 1000).toFixed(1) + ' mm' },
-                    { label: 'Antenna Length (L)', value: (L * 1000).toFixed(1) + ' mm' },
-                    { label: 'Vertical Height', value: (vertical_height * 1000).toFixed(1) + ' mm' },
-                    { label: 'Flare Width (W)', value: (flare_width * 1000).toFixed(1) + ' mm' },
-                    { label: 'Feed Gap (Wc)', value: (gap * 1000).toFixed(2) + ' mm' },
-                    { label: 'Slant Length (S)', value: (S * 1000).toFixed(1) + ' mm' },
-                    { label: 'Input Impedance', value: impedance.toFixed(1) + ' Ω' },
-                    { label: 'Quality Factor (Q)', value: Q.toFixed(1) },
-                    { label: 'Bandwidth (-3dB)', value: (bandwidth / 1e6).toFixed(0) + ' MHz' },
-                    { label: 'Effective Permittivity', value: eps_eff.toFixed(3) }
-                ]);
+                    { label: 'Target Frequency', value: (target_freq / 1e9).toFixed(3) + ' GHz' },
+                    { label: 'Wavelength (λ<sub>0</sub>)', value: (wavelength_val * 1000).toFixed(1) + ' mm' },
+                    { label: 'Est. Arm Length (L)', value: `${L_final_mm} mm (approx.)` },
+                    { label: 'Est. Mouth Width (W)', value: `${W_final_mm} mm (approx.)` },
+                    { label: 'Est. Slant Length (S)', value: `${S_final_mm} mm (approx.)` },
+                    { label: 'Est. Feed Gap (Wc)', value: `${Wc_final_mm} mm (approx.)` },
+                    { label: 'Effective Permittivity (ε<sub>eff</sub>)', value: eps_eff_final.toFixed(3) },
+                    { label: 'Input Impedance (Z<sub>in</sub>)', value: `${impedance.toFixed(1)} Ω (approx.)` },
+                    { label: 'Quality Factor (Q)', value: Q_val.toFixed(1) },
+                    { label: 'Bandwidth (-3dB)', value: (bandwidth / 1e6).toFixed(1) + ' MHz' }
+                ], 'results-container-bow');
+                 document.querySelector('#results-card-bow .placeholder-text').style.display = 'none';
             } catch (error) {
-                displayError('Please check your input values and try again.');
+                 console.error("Calculation Error:", error);
             }
         }
+        function clearResults() {
+            const resultsDiv = document.getElementById('results-container-bow');
+            const placeholder = document.querySelector('#results-card-bow .placeholder-text');
+            if (resultsDiv) {
+                resultsDiv.innerHTML = ''; // Clear previous results
+            }
+            if(placeholder) placeholder.style.display = 'block';
 
-        function displayResults(results) {
-            const resultsDiv = document.getElementById('results');
-            let html = '<h3>📊 Calculated Values</h3>';
-            
+             // Clear all error messages
+            document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
+        }
+
+
+        function displayResults(results, containerId) {
+            const resultsDiv = document.getElementById(containerId);
+            if (!resultsDiv) return;
+
+            let html = '';
             results.forEach(result => {
                 html += `
                     <div class="result-item">
@@ -481,19 +401,36 @@
             });
             
             resultsDiv.innerHTML = html;
+            const placeholder = document.querySelector('#results-card-bow .placeholder-text');
+            if(placeholder) placeholder.style.display = 'none';
+            document.getElementById('results-card-bow').classList.remove('hidden');
         }
 
-        function displayError(message) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = `
-                <h3>⚠️ Error</h3>
-                <p style="color: #d32f2f; text-align: center; padding: 20px 0;">${message}</p>
-            `;
+        function displayError(message, containerId = 'results-container-bow') {
+            const resultsDiv = document.getElementById(containerId);
+            if (!resultsDiv) return;
+            resultsDiv.innerHTML = `<p style="color: var(--error-color); text-align: center; padding: 20px 0;">${message}</p>`;
+            const placeholder = document.querySelector('#results-card-bow .placeholder-text');
+            if(placeholder) placeholder.style.display = 'none';
+            document.getElementById('results-card-bow').classList.remove('hidden');
         }
 
-        // Initialize with default calculation
+        // Tippy.js initialization
+        tippy('[data-tippy-content]', {
+            animation: 'scale-subtle',
+            theme: 'light-border', // Or your custom theme
+        });
+
+        // Initialize with default calculation on forward tab
         window.addEventListener('load', function() {
-            calculateForward();
+            // Make sure the forward tab is active visually and logically
+            switchTab('forward', document.querySelector('.tab-button.active'));
+            // Optionally, run a default calculation if desired, or wait for user input
+            // calculateForward(); // Uncomment if you want an initial calculation
+            // Ensure placeholder is visible initially
+            const placeholder = document.querySelector('#results-card-bow .placeholder-text');
+            if(placeholder) placeholder.style.display = 'block';
+             document.getElementById('results-card-bow').classList.remove('hidden'); // Show results card area
         });
     </script>
 </body>
