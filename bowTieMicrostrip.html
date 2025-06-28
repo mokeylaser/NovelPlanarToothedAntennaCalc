@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bowtie Antenna Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .section {
+            padding: 40px;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .section:last-child {
+            border-right: none;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border-radius: 2px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #4ECDC4;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+        }
+        
+        .unit {
+            font-size: 0.85em;
+            color: #777;
+            margin-left: 5px;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .results {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 5px solid #4ECDC4;
+        }
+        
+        .results h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .result-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #2c3e50;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Bowtie Antenna Calculator</h1>
+            <p>Design and analyze bowtie printed antennas with precision</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="section">
+                <h2>Design Parameters</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('forward')">Parameters → Frequency</button>
+                    <button class="tab" onclick="switchTab('reverse')">Frequency → Parameters</button>
+                </div>
+                
+                <div id="forward-tab" class="tab-content active">
+                    <div class="input-group">
+                        <label>Substrate Relative Permittivity (εᵣ)</label>
+                        <input type="number" id="eps_r" value="4.4" step="0.1" min="1">
+                        <span class="unit">dimensionless</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Substrate Thickness (h)</label>
+                        <input type="number" id="h" value="1.6" step="0.1" min="0.1">
+                        <span class="unit">mm</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Mouth Width at Outer Edge (W)</label>
+                        <input type="number" id="W" value="18" step="0.1" min="0.1">
+                        <span class="unit">mm</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Width at Feed Gap (Wc)</label>
+                        <input type="number" id="Wc" value="3" step="0.1" min="0.1">
+                        <span class="unit">mm</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Half-Height of Triangular Wing (L)</label>
+                        <input type="number" id="L" value="25" step="0.1" min="0.1">
+                        <span class="unit">mm</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Slanted-Edge Length (S)</label>
+                        <input type="number" id="S" value="20" step="0.1" min="0.1">
+                        <span class="unit">mm</span>
+                    </div>
+                    
+                    <button class="button" onclick="calculateForward()">Calculate Frequency</button>
+                </div>
+                
+                <div id="reverse-tab" class="tab-content">
+                    <div class="input-group">
+                        <label>Target Center Frequency</label>
+                        <input type="number" id="target_freq" value="2.4" step="0.1" min="0.1">
+                        <span class="unit">GHz</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Substrate Relative Permittivity (εᵣ)</label>
+                        <input type="number" id="eps_r_rev" value="4.4" step="0.1" min="1">
+                        <span class="unit">dimensionless</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Substrate Thickness (h)</label>
+                        <input type="number" id="h_rev" value="1.6" step="0.1" min="0.1">
+                        <span class="unit">mm</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>K Factor (Phase Difference)</label>
+                        <input type="number" id="k_factor" value="0.4" step="0.1" min="0.3" max="0.6">
+                        <span class="unit">0.3 - 0.6</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Flare Angle</label>
+                        <input type="number" id="flare_angle" value="90" step="5" min="30" max="120">
+                        <span class="unit">degrees</span>
+                    </div>
+                    
+                    <button class="button" onclick="calculateReverse()">Calculate Parameters</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Results</h2>
+                <div id="results" class="results">
+                    <h3>📊 Calculated Values</h3>
+                    <p style="color: #666; text-align: center; padding: 40px 0;">Enter parameters and click calculate to see results</p>
+                </div>
+                
+                <div class="note">
+                    <strong>Note:</strong> These calculations provide first-order estimates. Fine-tuning in an EM solver (HFSS, CST, Sonnet, etc.) is recommended for optimal performance.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const C0 = 299792458; // speed of light (m/s)
+
+        // Core antenna equations from the document
+        function epsEff(eps_r, h, W, Wc) {
+            return 0.5 * (eps_r + 1) + 0.5 * (eps_r - 1) * Math.pow(1 + 24 * h / (W + Wc), -0.5);
+        }
+
+        function deltaL(h, eps_eff, W, Wc) {
+            const k = (W + Wc) / (2 * h);
+            return (0.412 * h * (eps_eff + 0.3) * (k + 0.262)) / ((eps_eff - 0.258) * (k + 0.813));
+        }
+
+        function resonanceFreq(L, W, Wc, S, h, eps_r) {
+            const eps_eff = epsEff(eps_r, h, W, Wc);
+            const dL = deltaL(h, eps_eff, W, Wc);
+            const num = (W + 2 * dL) + (Wc + 2 * dL);
+            const den = (W + 2 * dL) * (S + 2 * dL);
+            return (1.152 * C0 * num) / (2 * L * den * Math.sqrt(eps_eff));
+        }
+
+        // Additional design equations
+        function calculateQuality(k, angle_deg) {
+            const angle_rad = angle_deg * Math.PI / 180;
+            return 1 / (k * Math.tan(angle_rad / 2));
+        }
+
+        function calculateBandwidth(frequency, Q) {
+            return frequency / Q;
+        }
+
+        function calculateWavelength(frequency) {
+            return C0 / frequency;
+        }
+
+        function calculateImpedance(L, G) {
+            return 60 * Math.log(2 * L / G);
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function calculateForward() {
+            try {
+                // Get input values (convert mm to m)
+                const eps_r = parseFloat(document.getElementById('eps_r').value);
+                const h = parseFloat(document.getElementById('h').value) / 1000;
+                const W = parseFloat(document.getElementById('W').value) / 1000;
+                const Wc = parseFloat(document.getElementById('Wc').value) / 1000;
+                const L = parseFloat(document.getElementById('L').value) / 1000;
+                const S = parseFloat(document.getElementById('S').value) / 1000;
+
+                // Calculate primary values
+                const freq = resonanceFreq(L, W, Wc, S, h, eps_r);
+                const eps_eff = epsEff(eps_r, h, W, Wc);
+                const dL = deltaL(h, eps_eff, W, Wc);
+                const wavelength = calculateWavelength(freq);
+                
+                // Calculate additional parameters
+                const gap = wavelength * 0.01; // 1% of wavelength
+                const impedance = calculateImpedance(L, gap);
+                const Q = calculateQuality(0.4, 90); // Default values
+                const bandwidth = calculateBandwidth(freq, Q);
+
+                // Display results
+                displayResults([
+                    { label: 'Resonance Frequency', value: (freq / 1e9).toFixed(3) + ' GHz' },
+                    { label: 'Effective Permittivity (εₑff)', value: eps_eff.toFixed(3) },
+                    { label: 'Fringing Extension (ΔL)', value: (dL * 1000).toFixed(3) + ' mm' },
+                    { label: 'Wavelength', value: (wavelength * 1000).toFixed(1) + ' mm' },
+                    { label: 'Estimated Gap', value: (gap * 1000).toFixed(2) + ' mm' },
+                    { label: 'Input Impedance', value: impedance.toFixed(1) + ' Ω' },
+                    { label: 'Quality Factor (Q)', value: Q.toFixed(1) },
+                    { label: 'Bandwidth (-3dB)', value: (bandwidth / 1e6).toFixed(0) + ' MHz' }
+                ]);
+            } catch (error) {
+                displayError('Please check your input values and try again.');
+            }
+        }
+
+        function calculateReverse() {
+            try {
+                // Get input values
+                const target_freq = parseFloat(document.getElementById('target_freq').value) * 1e9;
+                const eps_r = parseFloat(document.getElementById('eps_r_rev').value);
+                const h = parseFloat(document.getElementById('h_rev').value) / 1000;
+                const k = parseFloat(document.getElementById('k_factor').value);
+                const flare_angle = parseFloat(document.getElementById('flare_angle').value);
+
+                // Calculate wavelength and basic dimensions
+                const wavelength = calculateWavelength(target_freq);
+                const quarter_wave = wavelength / 4;
+                
+                // Calculate antenna dimensions based on formulas provided
+                const L = quarter_wave; // Length for each side
+                const vertical_height = L * Math.cos((flare_angle / 2) * Math.PI / 180);
+                const flare_width = 2 * L * Math.sin((flare_angle / 2) * Math.PI / 180);
+                const gap = wavelength * 0.01; // 1% of wavelength
+                
+                // Estimate other parameters
+                const W = flare_width;
+                const Wc = gap;
+                const S = L * 0.8; // Approximation
+                
+                // Calculate performance metrics
+                const Q = calculateQuality(k, flare_angle);
+                const bandwidth = calculateBandwidth(target_freq, Q);
+                const impedance = calculateImpedance(L, gap);
+                const eps_eff = epsEff(eps_r, h, W, Wc);
+
+                // Display results
+                displayResults([
+                    { label: 'Wavelength', value: (wavelength * 1000).toFixed(1) + ' mm' },
+                    { label: 'Antenna Length (L)', value: (L * 1000).toFixed(1) + ' mm' },
+                    { label: 'Vertical Height', value: (vertical_height * 1000).toFixed(1) + ' mm' },
+                    { label: 'Flare Width (W)', value: (flare_width * 1000).toFixed(1) + ' mm' },
+                    { label: 'Feed Gap (Wc)', value: (gap * 1000).toFixed(2) + ' mm' },
+                    { label: 'Slant Length (S)', value: (S * 1000).toFixed(1) + ' mm' },
+                    { label: 'Input Impedance', value: impedance.toFixed(1) + ' Ω' },
+                    { label: 'Quality Factor (Q)', value: Q.toFixed(1) },
+                    { label: 'Bandwidth (-3dB)', value: (bandwidth / 1e6).toFixed(0) + ' MHz' },
+                    { label: 'Effective Permittivity', value: eps_eff.toFixed(3) }
+                ]);
+            } catch (error) {
+                displayError('Please check your input values and try again.');
+            }
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            let html = '<h3>📊 Calculated Values</h3>';
+            
+            results.forEach(result => {
+                html += `
+                    <div class="result-item">
+                        <span class="result-label">${result.label}:</span>
+                        <span class="result-value">${result.value}</span>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function displayError(message) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h3>⚠️ Error</h3>
+                <p style="color: #d32f2f; text-align: center; padding: 20px 0;">${message}</p>
+            `;
+        }
+
+        // Initialize with default calculation
+        window.addEventListener('load', function() {
+            calculateForward();
+        });
+    </script>
+</body>
+</html>
